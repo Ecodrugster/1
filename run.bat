@@ -1,16 +1,22 @@
 @echo off
-title ITSTEP Social - Launcher
+title ITSTEP Social Network Manager
+cls
+
+echo [1/3] Closing existing processes...
+:: Завершаем процесс бэкенда (если он скомпилирован как main.exe)
+taskkill /F /IM main.exe /T 2>nul
+:: Завершаем процессы Node.js (фронтенд)
+taskkill /F /IM node.exe /T 2>nul
+
+echo [2/3] Starting Backend (Go)...
+start "Backend Server" cmd /c "cd backend && go run cmd/app/main.go"
+
+echo [3/3] Starting Frontend (Nuxt)...
+start "Frontend Server" cmd /c "cd frontend && npm run dev"
+
+echo.
 echo ========================================
-echo Starting ITSTEP Social System (Firestore Mode)
+echo   ALL SYSTEMS RESTARTED SUCCESSFULLY!
 echo ========================================
-
-:: 1. Запуск Бэкенда (Golang) в НОВОМ окне
-echo [1/2] Starting Backend...
-start "ITSTEP Backend" cmd /k "cd backend && go run cmd/app/main.go"
-
-:: 2. Запуск Фронтенда (Nuxt 3) в ЭТОМ окне
-echo [2/2] Starting Frontend...
-cd frontend
-npm run dev
-
+echo.
 pause

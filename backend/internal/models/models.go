@@ -17,3 +17,11 @@ type Comment struct {
 	Text      string    `json:"text" firestore:"text"`
 	CreatedAt time.Time `json:"created_at" firestore:"created_at"`
 }
+
+type User struct {
+	UID         string `json:"uid" firestore:"uid"`
+	DisplayName string `json:"display_name" firestore:"display_name"`
+	Email       string `json:"email" firestore:"email"`
+	PhotoURL    string `json:"photo_url" firestore:"photo_url"`
+	Role        string `json:"role" firestore:"role"` // 'student' or 'admin'
+}

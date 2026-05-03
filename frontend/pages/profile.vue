@@ -79,12 +79,12 @@
               <h3 class="text-slate-300 font-semibold mb-4">Статистика</h3>
               <div class="grid grid-cols-2 gap-4">
                 <div class="text-center p-4 bg-slate-950/50 rounded-lg">
-                  <div class="text-2xl font-bold text-white">124</div>
-                  <div class="text-xs text-slate-500 uppercase">Друзей</div>
+                  <div class="text-2xl font-bold text-white">{{ stats.posts }}</div>
+                  <div class="text-xs text-slate-500 uppercase">Постов</div>
                 </div>
                 <div class="text-center p-4 bg-slate-950/50 rounded-lg">
-                  <div class="text-2xl font-bold text-white">12</div>
-                  <div class="text-xs text-slate-500 uppercase">Постов</div>
+                  <div class="text-2xl font-bold text-white">{{ stats.comments }}</div>
+                  <div class="text-xs text-slate-500 uppercase">Комментариев</div>
                 </div>
               </div>
             </div>
@@ -115,6 +115,17 @@ const editForm = reactive({
   photoURL: ''
 })
 
+const stats = ref({ posts: 0, comments: 0 })
+
+const fetchStats = async () => {
+  try {
+    const data = await api('/profile/stats')
+    stats.value = data || { posts: 0, comments: 0 }
+  } catch (e) {
+    console.error('Failed to fetch stats:', e)
+  }
+}
+
 const openEditModal = () => {
   editForm.displayName = userStore.user?.displayName || ''
   editForm.photoURL = userStore.user?.photoURL || ''
@@ -123,25 +134,25 @@ const openEditModal = () => {
 
 const saveProfile = async () => {
   try {
-    // 1. Update Firebase Auth
     await updateProfile($auth.currentUser, {
       displayName: editForm.displayName,
       photoURL: editForm.photoURL
     })
     
-    // 2. Update Backend (Firestore)
     await api('/profile', {
       method: 'PUT',
       body: editForm
     })
     
-    // 3. Update Store
     userStore.setUser({ ...$auth.currentUser })
-    
     showEditModal.value = false
     alert('Профиль обновлен!')
   } catch (e) {
     alert('Ошибка при обновлении профиля: ' + e.message)
   }
 }
+
+onMounted(() => {
+  fetchStats()
+})
 </script>

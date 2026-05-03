@@ -17,7 +17,9 @@ func GetUserProfile(c *gin.Context) {
 		return
 	}
 
-	c.JSON(http.StatusOK, doc.Data())
+	data := doc.Data()
+	data["uid"] = doc.Ref.ID
+	c.JSON(http.StatusOK, data)
 }
 
 func UpdateUserProfile(c *gin.Context) {
@@ -36,6 +38,54 @@ func UpdateUserProfile(c *gin.Context) {
 	}
 
 	c.JSON(http.StatusOK, input)
+}
+
+
+func GetUserStats(c *gin.Context) {
+	firebaseUID := c.GetString("firebase_uid")
+
+	// Count posts
+	postIter := repositories.FirestoreClient.Collection("posts").Where("author_id", "==", firebaseUID).Documents(c.Request.Context())
+	postCount := 0
+	for {
+		_, err := postIter.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count posts"})
+			return
+		}
+		postCount++
+	}
+
+	// Count comments (across all posts)
+	commentCount := 0
+	postDocs := repositories.FirestoreClient.Collection("posts").Documents(c.Request.Context())
+	for {
+		postDoc, err := postDocs.Next()
+		if err == iterator.Done {
+			break
+		}
+		if err != nil {
+			c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to iterate posts for comments"})
+			return
+		}
+		commentsIter := postDoc.Ref.Collection("comments").Where("author_id", "==", firebaseUID).Documents(c.Request.Context())
+		for {
+			_, err := commentsIter.Next()
+			if err == iterator.Done {
+				break
+			}
+			if err != nil {
+				c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to count comments"})
+				return
+			}
+			commentCount++
+		}
+	}
+
+	c.JSON(http.StatusOK, gin.H{"posts": postCount, "comments": commentCount})
 }
 
 func GetAllUsers(c *gin.Context) {

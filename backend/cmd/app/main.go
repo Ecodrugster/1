@@ -53,13 +53,35 @@ func main() {
 		v1.POST("/posts/:id/comments", handlers.AddComment)
 		v1.GET("/posts/:id/comments", handlers.GetComments)
 
-		// Users
+		// News
+		v1.GET("/news", handlers.GetNews)
+
+		// User stats
+		v1.GET("/profile/stats", handlers.GetUserStats)
+			// Users
 		v1.GET("/users", handlers.GetAllUsers)
 
 		// Clubs
 		v1.GET("/clubs", handlers.GetClubs)
 		v1.POST("/clubs", handlers.CreateClub)
+		v1.PUT("/clubs/:id", handlers.UpdateClub)
+		v1.DELETE("/clubs/:id", handlers.DeleteClub)
 		v1.POST("/clubs/:id/join", handlers.JoinClub)
+		v1.POST("/clubs/:id/leave", handlers.LeaveClub)
+
+		// Admin routes
+		admin := v1.Group("/admin")
+		admin.Use(middleware.AdminRequired())
+		{
+			admin.GET("/users", handlers.AdminGetUsers)
+			admin.PUT("/users/:id/role", handlers.AdminUpdateUserRole)
+			admin.GET("/posts", handlers.AdminGetPosts)
+			admin.DELETE("/posts/:id", handlers.AdminDeletePost)
+			admin.DELETE("/news/:id", handlers.AdminDeleteNews)
+			admin.PUT("/news/:id", handlers.AdminUpdateNews)
+			admin.DELETE("/clubs/:id", handlers.AdminDeleteClub)
+			admin.PUT("/clubs/:id", handlers.AdminUpdateClub)
+		}
 	}
 
 	log.Println("Server starting on :8080")

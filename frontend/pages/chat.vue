@@ -138,14 +138,15 @@ const filteredUsers = computed(() => {
 const fetchUsers = async () => {
   try {
     const data = await api('/users')
+    console.log('[Chat Debug] Fetched Users:', data)
     users.value = data || []
   } catch (e) {
-    console.error('Failed to fetch users:', e)
+    console.error('[Chat Debug] Failed to fetch users:', e)
   }
 }
 
 const selectUser = (user) => {
-  selectedUser.ref = null // Reset
+  messages.value = [] // Clear old messages immediately
   selectedUser.value = user
   startListeningMessages(user.uid)
 }
@@ -168,6 +169,15 @@ const startListeningMessages = (otherUserId) => {
       id: doc.id,
       ...doc.data()
     }))
+
+    // Помечаем входящие сообщения как прочитанные
+    snapshot.docs.forEach(async (doc) => {
+      const data = doc.data()
+      if (data.receiverId === currentUserId && !data.read) {
+        const { updateDoc } = await import('firebase/firestore')
+        await updateDoc(doc.ref, { read: true })
+      }
+    })
     
     // Auto scroll to bottom
     nextTick(() => {
@@ -192,7 +202,10 @@ const sendMessage = async () => {
     await addDoc(collection($firestore, 'chats', chatId, 'messages'), {
       text,
       senderId: currentUserId,
-      createdAt: serverTimestamp()
+      receiverId: otherUserId,
+      participants: [currentUserId, otherUserId],
+      createdAt: serverTimestamp(),
+      read: false
     })
   } catch (e) {
     console.error('Error sending message:', e)

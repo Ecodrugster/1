@@ -23,6 +23,15 @@ export const useAuth = () => {
         const token = await user.getIdToken()
         userStore.setUser(user)
         userStore.setToken(token)
+        
+        // Загружаем профиль с бэкенда (роль, доп. данные)
+        try {
+          const { fetchApi } = useApi()
+          const profile = await fetchApi('/profile')
+          userStore.setProfile(profile)
+        } catch (e) {
+          console.error('Failed to fetch user profile:', e)
+        }
       } else {
         userStore.logout()
       }
@@ -35,11 +44,36 @@ export const useAuth = () => {
 
   const loginWithGoogle = async () => {
     const provider = new GoogleAuthProvider()
-    return signInWithPopup($auth, provider)
+    const cred = await signInWithPopup($auth, provider)
+    
+    // Создаем/обновляем профиль на бэкенде
+    const { fetchApi } = useApi()
+    await fetchApi('/profile', {
+      method: 'PUT',
+      body: {
+        email: cred.user.email,
+        displayName: cred.user.displayName,
+        photoURL: cred.user.photoURL,
+        role: 'student'
+      }
+    })
+    return cred
   }
 
   const register = async (email: string, pass: string) => {
     const cred = await createUserWithEmailAndPassword($auth, email, pass)
+    
+    // Создаем профиль на бэкенде
+    const { fetchApi } = useApi()
+    await fetchApi('/profile', {
+      method: 'PUT',
+      body: {
+        email: email,
+        displayName: email.split('@')[0],
+        role: 'student'
+      }
+    })
+    
     await sendEmailVerification(cred.user)
     return cred
   }

@@ -140,9 +140,14 @@
       <div class="bg-slate-900 border border-white/5 rounded-xl p-6 shadow-xl">
         <h3 class="text-white font-semibold mb-4">Новости колледжа</h3>
         <div class="space-y-4">
-          <div v-for="n in 2" :key="n" class="border-b border-white/5 pb-4 last:border-0 last:pb-0">
-            <h4 class="text-blue-400 text-sm font-medium mb-1">Событие #{{ n }}</h4>
-            <p class="text-slate-400 text-xs">Краткое описание важного события в колледже...</p>
+          <div v-if="news.length === 0" class="text-slate-400 text-sm">
+            Пока нет новостей. Добавьте их в коллекцию <code>news</code> в Firestore.
+          </div>
+
+          <div v-else v-for="item in news" :key="item.id" class="border-b border-white/5 pb-4 last:border-0 last:pb-0">
+            <h4 class="text-blue-400 text-sm font-medium mb-1">{{ item.title }}</h4>
+            <p class="text-slate-400 text-xs">{{ item.description }}</p>
+            <p class="text-xs text-slate-600 mt-1">{{ new Date(item.created_at).toLocaleString('ru-RU') }}</p>
           </div>
         </div>
       </div>
@@ -163,6 +168,17 @@ const userStore = useUserStore()
 const newPost = ref('')
 const posts = ref([])
 const loading = ref(true)
+const news = ref([])
+
+const fetchNews = async () => {
+  try {
+    const data = await api('/news')
+    news.value = data || []
+  } catch (e) {
+    console.error('Failed to fetch news:', e)
+  }
+}
+
 
 const handleLogout = async () => {
   await logout()
@@ -246,5 +262,6 @@ const addComment = async (post) => {
 
 onMounted(() => {
   fetchPosts()
+  fetchNews()
 })
 </script>

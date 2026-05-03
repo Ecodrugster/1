@@ -49,3 +49,8 @@ func InitFirestore() {
 	FirestoreClient = client
 	log.Println("Firestore connection established")
 }
+
+var (
+	Descending = firestore.Desc
+	MergeAll   = firestore.MergeAll
+)

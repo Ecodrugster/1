@@ -1,5 +1,6 @@
 <script setup>
 const userStore = useUserStore()
+const notificationStore = useNotificationStore()
 const { logout } = useAuth()
 const router = useRouter()
 
@@ -35,7 +36,7 @@ const handleLogout = async () => {
           <ClientOnly>
             <button class="p-2 hover:bg-white/5 rounded-full transition-all relative">
               <span class="text-xl">🔔</span>
-              <span class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-slate-950"></span>
+              <span v-if="notificationStore.unreadCount > 0" class="absolute top-1 right-1 w-2 h-2 bg-red-500 rounded-full border border-slate-950"></span>
             </button>
             
             <div v-if="userStore.user" class="flex items-center space-x-3">
