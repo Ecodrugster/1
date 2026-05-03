@@ -28,7 +28,7 @@ func main() {
 
 	// CORS Setup
 	config := cors.DefaultConfig()
-	config.AllowAllOrigins = true // Or specify config.AllowOrigins = []string{"http://localhost:3000"}
+	config.AllowAllOrigins = true
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	r.Use(cors.New(config))
 

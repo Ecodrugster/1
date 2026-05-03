@@ -59,7 +59,7 @@ func GetUserStats(c *gin.Context) {
 		postCount++
 	}
 
-	// Count comments (across all posts)
+	// Count comments
 	commentCount := 0
 	postDocs := repositories.FirestoreClient.Collection("posts").Documents(c.Request.Context())
 	for {
