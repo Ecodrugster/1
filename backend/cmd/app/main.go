@@ -67,7 +67,15 @@ func main() {
 		v1.PUT("/clubs/:id", handlers.UpdateClub)
 		v1.DELETE("/clubs/:id", handlers.DeleteClub)
 		v1.POST("/clubs/:id/join", handlers.JoinClub)
-		v1.POST("/clubs/:id/leave", handlers.LeaveClub)
+		v1.GET("/clubs/:id/leave", handlers.LeaveClub)
+		v1.GET("/grades", handlers.GetUserGrades)
+
+		// Teacher routes
+		teacher := v1.Group("/teacher")
+		teacher.Use(middleware.TeacherRequired())
+		{
+			teacher.POST("/grades", handlers.AddGrade)
+		}
 
 		// Admin routes
 		admin := v1.Group("/admin")
@@ -77,6 +85,7 @@ func main() {
 			admin.PUT("/users/:id/role", handlers.AdminUpdateUserRole)
 			admin.GET("/posts", handlers.AdminGetPosts)
 			admin.DELETE("/posts/:id", handlers.AdminDeletePost)
+			admin.POST("/news", handlers.CreateNews)
 			admin.DELETE("/news/:id", handlers.AdminDeleteNews)
 			admin.PUT("/news/:id", handlers.AdminUpdateNews)
 			admin.DELETE("/clubs/:id", handlers.AdminDeleteClub)

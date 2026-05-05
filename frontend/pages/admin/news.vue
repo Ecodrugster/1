@@ -16,6 +16,7 @@
         <thead>
           <tr class="bg-white/5 text-[10px] uppercase tracking-wider text-slate-500 font-bold">
             <th class="px-6 py-4">Заголовок</th>
+            <th class="px-6 py-4">Категория</th>
             <th class="px-6 py-4">Дата создания</th>
             <th class="px-6 py-4 text-right">Действия</th>
           </tr>
@@ -25,6 +26,11 @@
             <td class="px-6 py-4">
               <div class="text-white font-medium">{{ item.title }}</div>
               <div class="text-xs text-slate-500 truncate max-w-xs">{{ item.description }}</div>
+            </td>
+            <td class="px-6 py-4">
+              <span class="px-2 py-1 bg-blue-500/10 text-blue-500 text-[10px] font-bold uppercase rounded-md">
+                {{ item.category || 'news' }}
+              </span>
             </td>
             <td class="px-6 py-4 text-slate-400 font-mono text-xs">{{ new Date(item.created_at).toLocaleDateString() }}</td>
             <td class="px-6 py-4 text-right space-x-2">
@@ -43,6 +49,15 @@
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-2">Заголовок</label>
             <input v-model="form.title" type="text" class="w-full bg-slate-800 border-none rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50" />
+          </div>
+          <div>
+            <label class="block text-sm font-medium text-slate-400 mb-2">Категория</label>
+            <select v-model="form.category" class="w-full bg-slate-800 border-none rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50">
+              <option value="news">Новость</option>
+              <option value="announcement">Объявление</option>
+              <option value="event">Мероприятие</option>
+              <option value="deadline">Дедлайн</option>
+            </select>
           </div>
           <div>
             <label class="block text-sm font-medium text-slate-400 mb-2">Содержание</label>
@@ -67,7 +82,7 @@ definePageMeta({
 const { fetchApi: api } = useApi()
 const news = ref([])
 const showModal = ref(false)
-const form = reactive({ title: '', description: '' })
+const form = reactive({ title: '', description: '', category: 'news' })
 
 const fetchNews = async () => {
   const data = await api('/news')
@@ -77,16 +92,15 @@ const fetchNews = async () => {
 const openCreateModal = () => {
   form.title = ''
   form.description = ''
+  form.category = 'news'
   showModal.value = true
 }
 
 const saveNews = async () => {
   try {
-    // В ТЗ указан эндпоинт /admin/news, но мы можем использовать существующий /news если добавим туда проверку прав
-    // Для простоты пока используем /news (POST)
-    await api('/news', {
+    await api('/admin/news', {
       method: 'POST',
-      body: { ...form, created_at: new Date().toISOString() }
+      body: { ...form }
     })
     showModal.value = false
     fetchNews()

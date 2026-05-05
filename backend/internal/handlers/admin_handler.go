@@ -49,7 +49,7 @@ func AdminUpdateUserRole(c *gin.Context) {
 		return
 	}
 
-	if input.Role != "admin" && input.Role != "student" {
+	if input.Role != "admin" && input.Role != "student" && input.Role != "teacher" && input.Role != "curator" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Invalid role value"})
 		return
 	}

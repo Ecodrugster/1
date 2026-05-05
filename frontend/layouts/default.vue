@@ -4,6 +4,13 @@ const notificationStore = useNotificationStore()
 const { logout } = useAuth()
 const router = useRouter()
 
+const searchQuery = ref('')
+const handleSearch = () => {
+  if (!searchQuery.value.trim()) return
+  router.push({ path: '/search', query: { q: searchQuery.value } })
+  searchQuery.value = ''
+}
+
 const handleLogout = async () => {
   await logout()
   router.push('/login')
@@ -26,13 +33,33 @@ const handleLogout = async () => {
         <div class="hidden md:flex items-center bg-slate-900 border border-white/5 rounded-full px-4 py-1.5 w-96">
           <span class="text-slate-500 mr-2">🔍</span>
           <input 
+            v-model="searchQuery"
+            @keyup.enter="handleSearch"
             type="text" 
             placeholder="Поиск..." 
-            class="bg-transparent border-none focus:outline-none text-sm w-full placeholder-slate-600"
+            class="bg-transparent border-none focus:outline-none text-sm w-full placeholder-slate-600 text-white"
           />
         </div>
 
-        <div class="flex items-center space-x-4">
+        <div class="flex items-center space-x-6">
+          <NuxtLink to="/" class="text-sm font-medium text-slate-400 hover:text-white transition-all">Лента</NuxtLink>
+          <NuxtLink to="/clubs" class="text-sm font-medium text-slate-400 hover:text-white transition-all">Клубы</NuxtLink>
+          <NuxtLink to="/guide" class="text-sm font-bold text-yellow-500 hover:text-yellow-400 transition-all flex items-center">
+            <span class="mr-1">💡</span> Навигатор
+          </NuxtLink>
+          <NuxtLink to="/chat" class="text-sm font-medium text-slate-400 hover:text-white transition-all">Чат</NuxtLink>
+          
+          <!-- Role specific links -->
+          <NuxtLink v-if="userStore.isTeacher" to="/teacher/grades" class="text-sm font-bold text-blue-500 hover:text-blue-400 transition-all flex items-center">
+            <span class="mr-1">🎓</span> Журнал
+          </NuxtLink>
+          <NuxtLink v-if="!userStore.isAdmin && !userStore.isTeacher" to="/profile/grades" class="text-sm font-bold text-green-500 hover:text-green-400 transition-all flex items-center">
+            <span class="mr-1">📝</span> Мои оценки
+          </NuxtLink>
+          <NuxtLink v-if="userStore.isAdmin" to="/admin" class="text-sm font-bold text-red-500 hover:text-red-400 transition-all flex items-center">
+            <span class="mr-1">🛡️</span> Админ
+          </NuxtLink>
+        </div>
           <ClientOnly>
             <button class="p-2 hover:bg-white/5 rounded-full transition-all relative">
               <span class="text-xl">🔔</span>
@@ -58,7 +85,6 @@ const handleLogout = async () => {
               </NuxtLink>
             </div>
           </ClientOnly>
-        </div>
       </div>
     </header>
 

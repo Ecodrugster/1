@@ -43,14 +43,21 @@
               </span>
             </td>
             <td class="px-6 py-4">
-              <button 
-                @click="toggleRole(user)"
+              <select 
+                :value="user.role || 'student'"
+                @change="updateRole(user, $event.target.value)"
                 :disabled="updating === user.uid"
-                class="text-xs font-semibold px-3 py-1.5 rounded-lg transition-all"
-                :class="user.role === 'admin' ? 'bg-red-500/10 text-red-500 hover:bg-red-500/20' : 'bg-blue-600 text-white hover:bg-blue-500'"
+                class="bg-slate-800 border-none rounded-lg text-xs font-bold text-white px-3 py-2 focus:ring-2 focus:ring-blue-500/50 transition-all cursor-pointer"
+                :class="{
+                  'text-blue-500': user.role === 'admin' || user.role === 'curator',
+                  'text-green-500': user.role === 'teacher',
+                  'text-slate-500': !user.role || user.role === 'student'
+                }"
               >
-                {{ user.role === 'admin' ? 'Снять права' : 'Сделать админом' }}
-              </button>
+                <option value="student">Студент</option>
+                <option value="teacher">Учитель</option>
+                <option value="curator">Куратор</option>
+              </select>
             </td>
           </tr>
         </tbody>
@@ -99,8 +106,7 @@ const filteredUsers = computed(() => {
   )
 })
 
-const toggleRole = async (user) => {
-  const newRole = user.role === 'admin' ? 'student' : 'admin'
+const updateRole = async (user, newRole) => {
   if (!confirm(`Вы уверены, что хотите изменить роль для ${user.display_name || user.email} на ${newRole}?`)) return
   
   updating.value = user.uid
