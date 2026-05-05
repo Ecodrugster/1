@@ -27,7 +27,7 @@
     </div>
   </aside>
 </template>
-
+  
 <script setup>
 const menuItems = [
   { label: 'Дашборд', path: '/admin', icon: '📊' },

@@ -22,31 +22,34 @@ func InitFirestore() {
 
 	// Initialize Firebase App
 	// In production, use GOOGLE_APPLICATION_CREDENTIALS env var
-	// point to serviceAccountKey.json
-	conf := &firebase.Config{ProjectID: projectID}
-	
-	var app *firebase.App
 	var err error
+	var opt option.ClientOption
 
-	// Try to load service account if provided
-	saPath := os.Getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
-	if saPath != "" {
-		opt := option.WithCredentialsFile(saPath)
-		app, err = firebase.NewApp(ctx, conf, opt)
+	// 1. Проверяем наличие JSON в переменной окружения (для Railway)
+	firebaseJSON := os.Getenv("FIREBASE_JSON")
+	if firebaseJSON != "" {
+		opt = option.WithCredentialsJSON([]byte(firebaseJSON))
+		log.Println("Firebase initialized from FIREBASE_JSON environment variable")
 	} else {
-		app, err = firebase.NewApp(ctx, conf)
+		// 2. Локальный запуск - используем путь из .env или дефолтный файл
+		serviceAccountPath := os.Getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
+		if serviceAccountPath == "" {
+			serviceAccountPath = "serviceAccountKey.json"
+		}
+		opt = option.WithCredentialsFile(serviceAccountPath)
+		log.Printf("Firebase initialized from file: %s", serviceAccountPath)
 	}
 
+	app, err := firebase.NewApp(ctx, &firebase.Config{ProjectID: projectID}, opt)
 	if err != nil {
-		log.Fatalf("Failed to initialize firebase app: %v", err)
+		log.Fatalf("error initializing firebase app: %v\n", err)
 	}
 
-	client, err := app.Firestore(ctx)
+	FirestoreClient, err = app.Firestore(ctx)
 	if err != nil {
-		log.Fatalf("Failed to initialize firestore client: %v", err)
+		log.Fatalf("error initializing firestore client: %v\n", err)
 	}
-
-	FirestoreClient = client
+	
 	log.Println("Firestore connection established")
 }
 
