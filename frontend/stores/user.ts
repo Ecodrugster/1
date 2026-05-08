@@ -1,4 +1,4 @@
-import { defineStore } from 'pinia'
+﻿import { defineStore } from 'pinia'
 
 interface UserState {
   user: any | null
@@ -35,8 +35,18 @@ export const useUserStore = defineStore('user', {
   getters: {
     isLoggedIn: (state) => !!state.user,
     role: (state) => state.profile?.role || 'student',
-    isAdmin: (state) => state.profile?.role === 'admin' || state.profile?.role === 'curator',
-    isCurator: (state) => state.profile?.role === 'curator',
-    isTeacher: (state) => state.profile?.role === 'teacher'
+    roleLabel: (state) => {
+      const role = state.profile?.role || 'student'
+      if (role === 'admin') return 'Administrator'
+      if (role === 'teacher') return 'Teacher'
+      return 'Student'
+    },
+    isAdmin: (state) => state.profile?.role === 'admin',
+    isTeacher: (state) => state.profile?.role === 'teacher',
+    isTeacherLike: (state) => {
+      const role = state.profile?.role
+      return role === 'teacher' || role === 'admin'
+    }
   }
 })
+

@@ -1,9 +1,7 @@
 export default defineNuxtRouteMiddleware(async () => {
   const userStore = useUserStore()
 
-  if (userStore.loading) {
-    return
-  }
+  if (userStore.loading) return
 
   if (!userStore.isLoggedIn) {
     return navigateTo('/login')
@@ -15,15 +13,14 @@ export default defineNuxtRouteMiddleware(async () => {
       const profile = await fetchApi('/profile')
       userStore.setProfile(profile)
     } catch (e) {
-      console.error('[Admin Middleware] Failed to load profile:', e)
+      console.error('[Teacher Middleware] Failed to load profile:', e)
     }
   }
 
   const role = userStore.profile?.role
-  const canAccessAdmin = role === 'admin'
+  const isTeacherLike = role === 'teacher' || role === 'admin'
 
-  if (!canAccessAdmin) {
-    console.warn('[Admin Middleware] Access denied. Admin role required.')
+  if (!isTeacherLike) {
     return navigateTo('/')
   }
 })
