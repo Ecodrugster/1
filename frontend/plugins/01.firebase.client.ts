@@ -14,6 +14,23 @@ export default defineNuxtPlugin((nuxtApp) => {
     appId: config.public.firebaseAppId,
   }
 
+  const requiredFields = ['apiKey', 'authDomain', 'projectId', 'appId'] as const
+  const missingFields = requiredFields.filter((key) => !firebaseConfig[key])
+
+  if (missingFields.length > 0) {
+    console.warn(
+      `[firebase] Missing config fields: ${missingFields.join(', ')}. Auth and Firestore are disabled until env variables are set.`
+    )
+
+    return {
+      provide: {
+        firebaseApp: null,
+        auth: null,
+        firestore: null,
+      },
+    }
+  }
+
   const app = initializeApp(firebaseConfig)
   const auth = getAuth(app)
   const db = getFirestore(app)

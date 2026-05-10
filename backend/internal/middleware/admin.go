@@ -7,7 +7,7 @@ import (
 	"github.com/user/itstep-backend/internal/repositories"
 )
 
-// AdminRequired - Доступ только для кураторов (админов)
+// AdminRequired allows only admin users.
 func AdminRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		firebaseUID, exists := c.Get("firebase_uid")
@@ -25,8 +25,8 @@ func AdminRequired() gin.HandlerFunc {
 		}
 
 		role, _ := doc.Data()["role"].(string)
-		if role != "admin" && role != "curator" {
-			c.JSON(http.StatusForbidden, gin.H{"error": "Curator privileges required."})
+		if role != "admin" {
+			c.JSON(http.StatusForbidden, gin.H{"error": "Admin privileges required."})
 			c.Abort()
 			return
 		}
@@ -35,7 +35,7 @@ func AdminRequired() gin.HandlerFunc {
 	}
 }
 
-// TeacherRequired - Доступ только для учителей (и кураторов)
+// TeacherRequired allows teachers and admins.
 func TeacherRequired() gin.HandlerFunc {
 	return func(c *gin.Context) {
 		firebaseUID, exists := c.Get("firebase_uid")
@@ -53,7 +53,7 @@ func TeacherRequired() gin.HandlerFunc {
 		}
 
 		role, _ := doc.Data()["role"].(string)
-		if role != "teacher" && role != "admin" && role != "curator" {
+		if role != "teacher" && role != "admin" {
 			c.JSON(http.StatusForbidden, gin.H{"error": "Teacher privileges required."})
 			c.Abort()
 			return

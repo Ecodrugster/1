@@ -3,9 +3,30 @@ export const useApi = () => {
   const config = useRuntimeConfig()
   const baseUrl = config.public.apiBaseUrl || 'http://localhost:8080/api/v1'
 
-  const fetchApi = async (url: string, options: any = {}) => {
+  const ensureToken = async (forceRefresh = false) => {
+    if (!process.client) return userStore.token
+
+    const { $auth } = useNuxtApp()
+    const currentUser = $auth?.currentUser
+    if (!currentUser) return userStore.token
+
+    if (!userStore.token || forceRefresh) {
+      try {
+        const freshToken = await currentUser.getIdToken(forceRefresh)
+        userStore.setToken(freshToken)
+      } catch (e) {
+        console.error('[API] Failed to refresh Firebase token:', e)
+      }
+    }
+
+    return userStore.token
+  }
+
+  const request = async (url: string, options: any = {}) => {
+    await ensureToken(false)
+
     const headers = {
-      ...options.headers,
+      ...options.headers
     }
 
     if (userStore.token) {
@@ -14,11 +35,24 @@ export const useApi = () => {
 
     return $fetch(`${baseUrl}${url}`, {
       ...options,
-      headers,
+      headers
     })
   }
 
+  const fetchApi = async (url: string, options: any = {}) => {
+    try {
+      return await request(url, options)
+    } catch (e: any) {
+      const status = e?.status || e?.response?.status
+      if (status === 401 && process.client) {
+        await ensureToken(true)
+        return await request(url, options)
+      }
+      throw e
+    }
+  }
+
   return {
-    fetchApi,
+    fetchApi
   }
 }

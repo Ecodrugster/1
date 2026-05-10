@@ -2,7 +2,7 @@
   <div class="space-y-6">
     <div class="flex justify-between items-center">
       <h2 class="text-2xl font-bold text-white">Управление новостями</h2>
-      <button 
+      <button
         @click="openCreateModal"
         class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-semibold transition-all shadow-lg shadow-blue-600/20"
       >
@@ -10,7 +10,10 @@
       </button>
     </div>
 
-    <!-- News Table -->
+    <div v-if="errorMessage" class="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm">
+      {{ errorMessage }}
+    </div>
+
     <div class="bg-slate-900 border border-white/5 rounded-2xl overflow-hidden shadow-xl">
       <table class="w-full text-left border-collapse">
         <thead>
@@ -32,16 +35,25 @@
                 {{ item.category || 'news' }}
               </span>
             </td>
-            <td class="px-6 py-4 text-slate-400 font-mono text-xs">{{ new Date(item.created_at).toLocaleDateString() }}</td>
+            <td class="px-6 py-4 text-slate-400 font-mono text-xs">
+              {{ formatDate(item.created_at) }}
+            </td>
             <td class="px-6 py-4 text-right space-x-2">
-              <button @click="deleteNews(item.id)" class="p-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all">🗑️</button>
+              <button
+                @click="deleteNews(item.id)"
+                class="px-3 py-2 text-red-500 hover:bg-red-500/10 rounded-lg transition-all text-xs font-semibold"
+              >
+                Удалить
+              </button>
             </td>
           </tr>
         </tbody>
       </table>
+
+      <div v-if="loading" class="p-12 text-center text-slate-500 animate-pulse">Загрузка новостей...</div>
+      <div v-else-if="news.length === 0" class="p-12 text-center text-slate-500">Новостей пока нет.</div>
     </div>
 
-    <!-- Create Modal (Simplified for now) -->
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
       <div class="bg-slate-900 border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl">
         <h2 class="text-2xl font-bold text-white mb-6">Новая новость</h2>
@@ -81,12 +93,32 @@ definePageMeta({
 
 const { fetchApi: api } = useApi()
 const news = ref([])
+const loading = ref(false)
 const showModal = ref(false)
+const errorMessage = ref('')
 const form = reactive({ title: '', description: '', category: 'news' })
 
+const formatDate = (value) => {
+  if (!value) return 'дата не указана'
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return 'дата не указана'
+  return date.toLocaleDateString()
+}
+
 const fetchNews = async () => {
-  const data = await api('/news')
-  news.value = data || []
+  loading.value = true
+  errorMessage.value = ''
+  try {
+    const data = await api('/news')
+    news.value = data || []
+  } catch (e) {
+    const status = e?.status || e?.response?.status
+    const message = e?.data?.error || e?.message || 'Ошибка загрузки новостей'
+    errorMessage.value = `Не удалось загрузить новости (${status || 'no-status'}): ${message}`
+    news.value = []
+  } finally {
+    loading.value = false
+  }
 }
 
 const openCreateModal = () => {
@@ -103,20 +135,19 @@ const saveNews = async () => {
       body: { ...form }
     })
     showModal.value = false
-    fetchNews()
+    await fetchNews()
   } catch (e) {
-    alert('Ошибка при сохранении')
+    alert('Ошибка при сохранении: ' + (e?.data?.error || e?.message || 'неизвестная ошибка'))
   }
 }
 
 const deleteNews = async (id) => {
   if (!confirm('Удалить эту новость?')) return
   try {
-    // Пока у нас нет DELETE /news, но мы его добавим
     await api(`/admin/news/${id}`, { method: 'DELETE' })
-    fetchNews()
+    await fetchNews()
   } catch (e) {
-    alert('Ошибка при удалении')
+    alert('Ошибка при удалении: ' + (e?.data?.error || e?.message || 'неизвестная ошибка'))
   }
 }
 

@@ -1,4 +1,5 @@
-import { 
+import {
+  type User,
   onIdTokenChanged, 
   signInWithEmailAndPassword, 
   createUserWithEmailAndPassword, 
@@ -12,6 +13,19 @@ export const useAuth = () => {
   const { $auth } = useNuxtApp()
   const userStore = useUserStore()
 
+  const ensureAuth = () => {
+    if (!$auth) {
+      throw new Error('Firebase Auth is not configured. Set FIREBASE_* variables in frontend/.env and restart Nuxt.')
+    }
+  }
+
+  const syncSessionFromUser = async (user: User) => {
+    const token = await user.getIdToken()
+    userStore.setUser(user)
+    userStore.setToken(token)
+    return token
+  }
+
   const initAuth = () => {
     if (!$auth) {
       console.warn('Auth not initialized yet')
@@ -20,9 +34,7 @@ export const useAuth = () => {
     
     onIdTokenChanged($auth, async (user) => {
       if (user) {
-        const token = await user.getIdToken()
-        userStore.setUser(user)
-        userStore.setToken(token)
+        await syncSessionFromUser(user)
         
         // Загружаем профиль с бэкенда (роль, доп. данные)
         try {
@@ -39,12 +51,15 @@ export const useAuth = () => {
   }
 
   const login = async (email: string, pass: string) => {
+    ensureAuth()
     return signInWithEmailAndPassword($auth, email, pass)
   }
 
   const loginWithGoogle = async () => {
+    ensureAuth()
     const provider = new GoogleAuthProvider()
     const cred = await signInWithPopup($auth, provider)
+    await syncSessionFromUser(cred.user)
     
     // Создаем/обновляем профиль на бэкенде
     const { fetchApi } = useApi()
@@ -61,7 +76,9 @@ export const useAuth = () => {
   }
 
   const register = async (email: string, pass: string) => {
+    ensureAuth()
     const cred = await createUserWithEmailAndPassword($auth, email, pass)
+    await syncSessionFromUser(cred.user)
     
     // Создаем профиль на бэкенде
     const { fetchApi } = useApi()
@@ -79,6 +96,7 @@ export const useAuth = () => {
   }
 
   const logout = async () => {
+    ensureAuth()
     return signOut($auth)
   }
 

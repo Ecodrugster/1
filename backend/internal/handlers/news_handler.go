@@ -2,12 +2,13 @@ package handlers
 
 import (
 	"net/http"
+	"strings"
 	"time"
 
+	"cloud.google.com/go/firestore"
 	"github.com/gin-gonic/gin"
 	"github.com/user/itstep-backend/internal/repositories"
 	"google.golang.org/api/iterator"
-	"cloud.google.com/go/firestore"
 )
 
 type NewsItem struct {
@@ -32,13 +33,21 @@ func CreateNews(c *gin.Context) {
 		return
 	}
 	item.ID = ref.ID
+
+	authorUID := strings.TrimSpace(c.GetString("firebase_uid"))
+	if authorUID != "" {
+		logAdminAction(c, authorUID, "news.created", "news", ref.ID, item.Title, map[string]interface{}{
+			"category": item.Category,
+		})
+	}
+
 	c.JSON(http.StatusCreated, item)
 }
 
 func GetNews(c *gin.Context) {
 	category := c.Query("category")
 	query := repositories.FirestoreClient.Collection("news").OrderBy("created_at", firestore.Desc)
-	
+
 	if category != "" {
 		query = query.Where("category", "==", category)
 	}

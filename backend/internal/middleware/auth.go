@@ -5,6 +5,8 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"path/filepath"
+	"runtime"
 	"strings"
 
 	firebase "firebase.google.com/go/v4"
@@ -15,18 +17,54 @@ import (
 
 var authClient *auth.Client
 
+func resolveServiceAccountPath() string {
+	saPath := strings.TrimSpace(os.Getenv("FIREBASE_SERVICE_ACCOUNT_PATH"))
+	if saPath != "" {
+		if _, err := os.Stat(saPath); err == nil {
+			return saPath
+		}
+		log.Printf("FIREBASE_SERVICE_ACCOUNT_PATH points to missing file: %s", saPath)
+	}
+
+	candidates := []string{
+		"serviceAccountKey.json",
+		"backend/serviceAccountKey.json",
+		"../serviceAccountKey.json",
+		"../../serviceAccountKey.json",
+	}
+
+	for _, candidate := range candidates {
+		if _, err := os.Stat(candidate); err == nil {
+			return candidate
+		}
+	}
+
+	if _, sourceFile, _, ok := runtime.Caller(0); ok {
+		// auth.go => internal/middleware, so go 2 levels up to backend root
+		backendRoot := filepath.Clean(filepath.Join(filepath.Dir(sourceFile), "..", ".."))
+		sourceCandidate := filepath.Join(backendRoot, "serviceAccountKey.json")
+		if _, err := os.Stat(sourceCandidate); err == nil {
+			return sourceCandidate
+		}
+	}
+
+	return ""
+}
+
 func InitFirebase() {
 	ctx := context.Background()
-	saPath := os.Getenv("FIREBASE_SERVICE_ACCOUNT_PATH")
-	
+	saPath := resolveServiceAccountPath()
+
 	var app *firebase.App
 	var err error
 
 	if saPath != "" {
 		opt := option.WithCredentialsFile(saPath)
 		app, err = firebase.NewApp(ctx, nil, opt)
+		log.Printf("Firebase Auth initialized from credentials file: %s", saPath)
 	} else {
 		app, err = firebase.NewApp(ctx, nil)
+		log.Printf("Firebase Auth initialized from default credentials")
 	}
 
 	if err != nil {

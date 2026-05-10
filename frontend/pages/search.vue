@@ -3,11 +3,11 @@
     <div class="mb-12">
       <div class="relative max-w-2xl mx-auto">
         <span class="absolute left-4 top-1/2 -translate-y-1/2 text-2xl">🔍</span>
-        <input 
-          v-model="query" 
+        <input
+          v-model="query"
           @input="handleSearch"
-          type="text" 
-          placeholder="Искать студентов, посты, клубы или новости..." 
+          type="text"
+          placeholder="Искать людей, посты, клубы и новости..."
           class="w-full bg-slate-900 border border-white/10 rounded-2xl pl-14 pr-6 py-4 text-xl text-white focus:ring-4 focus:ring-blue-500/20 transition-all outline-none"
         />
       </div>
@@ -18,31 +18,29 @@
     </div>
 
     <div v-else-if="!query && !hasResults" class="text-center py-20 text-slate-500">
-      <div class="text-6xl mb-4">🕵️‍♂️</div>
-      <p>Введите поисковый запрос, чтобы начать поиск</p>
+      <div class="text-6xl mb-4">🕵️</div>
+      <p>Введите запрос для поиска</p>
     </div>
 
     <div v-else class="space-y-12">
-      <!-- Users -->
       <section v-if="results.users.length > 0">
         <h2 class="text-xl font-bold text-white mb-6 flex items-center">
-          <span class="mr-2">👥</span> Студенты и сотрудники
+          <span class="mr-2">👥</span> Пользователи
         </h2>
         <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           <div v-for="user in results.users" :key="user.uid" class="bg-slate-900 border border-white/5 p-4 rounded-2xl flex items-center space-x-4">
             <div class="w-12 h-12 rounded-full bg-blue-600 flex items-center justify-center font-bold text-white">
-              {{ (user.display_name || user.email)[0].toUpperCase() }}
+              {{ (user.display_name || user.email || 'U')[0].toUpperCase() }}
             </div>
             <div>
               <div class="text-white font-bold">{{ user.display_name || 'Без имени' }}</div>
-              <div class="text-xs text-slate-500 uppercase">{{ user.role || 'student' }}</div>
+              <div class="text-xs text-slate-500 uppercase">{{ roleLabel(user.role) }}</div>
             </div>
             <NuxtLink :to="`/chat?uid=${user.uid}`" class="ml-auto text-blue-500 hover:text-blue-400">💬</NuxtLink>
           </div>
         </div>
       </section>
 
-      <!-- Clubs -->
       <section v-if="results.clubs.length > 0">
         <h2 class="text-xl font-bold text-white mb-6 flex items-center">
           <span class="mr-2">🎭</span> Клубы
@@ -59,20 +57,18 @@
         </div>
       </section>
 
-      <!-- Posts -->
       <section v-if="results.posts.length > 0">
         <h2 class="text-xl font-bold text-white mb-6 flex items-center">
           <span class="mr-2">📝</span> Посты
         </h2>
         <div class="space-y-4">
           <div v-for="post in results.posts" :key="post.id" class="bg-slate-900 border border-white/5 p-6 rounded-2xl">
-            <p class="text-slate-300 mb-2">{{ post.text }}</p>
+            <p class="text-slate-300 mb-2">{{ post.content }}</p>
             <div class="text-[10px] text-slate-600 uppercase font-bold">{{ formatDate(post.created_at) }}</div>
           </div>
         </div>
       </section>
 
-      <!-- News -->
       <section v-if="results.news.length > 0">
         <h2 class="text-xl font-bold text-white mb-6 flex items-center">
           <span class="mr-2">📰</span> Новости
@@ -87,7 +83,7 @@
       </section>
 
       <div v-if="!loading && query && !hasResults" class="text-center py-20 text-slate-500">
-        <p>По вашему запросу «{{ query }}» ничего не найдено</p>
+        <p>По запросу «{{ query }}» ничего не найдено</p>
       </div>
     </div>
   </div>
@@ -96,6 +92,7 @@
 <script setup>
 const { fetchApi: api } = useApi()
 const route = useRoute()
+
 const query = ref(route.query.q || '')
 const loading = ref(false)
 
@@ -105,6 +102,12 @@ const results = reactive({
   clubs: [],
   news: []
 })
+
+const roleLabel = (role) => {
+  if (role === 'admin') return 'Администратор'
+  if (role === 'teacher') return 'Преподаватель'
+  return 'Студент'
+}
 
 const hasResults = computed(() => {
   return results.users.length > 0 || results.posts.length > 0 || results.clubs.length > 0 || results.news.length > 0
@@ -121,10 +124,8 @@ const handleSearch = async () => {
 
   loading.value = true
   try {
-    // В идеале это должен быть один эндпоинт на бэкенде, но для гибкости сделаем параллельные запросы
     const q = query.value.toLowerCase()
-    
-    // Получаем все данные
+
     const [usersRes, posts, clubs, news] = await Promise.all([
       api('/users'),
       api('/posts'),
@@ -132,25 +133,22 @@ const handleSearch = async () => {
       api('/news')
     ])
 
-    // /users возвращает { users: [], total: X }
     const usersList = usersRes.users || usersRes || []
 
-    results.users = usersList.filter(u => 
-      u.display_name?.toLowerCase().includes(q) || 
+    results.users = usersList.filter(u =>
+      u.display_name?.toLowerCase().includes(q) ||
       u.email?.toLowerCase().includes(q)
     )
 
-    results.posts = (posts || []).filter(p => 
-      p.text?.toLowerCase().includes(q)
-    )
+    results.posts = (posts || []).filter(p => p.content?.toLowerCase().includes(q))
 
-    results.clubs = (clubs || []).filter(c => 
-      c.name?.toLowerCase().includes(q) || 
+    results.clubs = (clubs || []).filter(c =>
+      c.name?.toLowerCase().includes(q) ||
       c.description?.toLowerCase().includes(q)
     )
 
-    results.news = (news || []).filter(n => 
-      n.title?.toLowerCase().includes(q) || 
+    results.news = (news || []).filter(n =>
+      n.title?.toLowerCase().includes(q) ||
       n.description?.toLowerCase().includes(q)
     )
   } catch (e) {
@@ -162,10 +160,9 @@ const handleSearch = async () => {
 
 const formatDate = (date) => {
   if (!date) return ''
-  return new Date(date).toLocaleDateString()
+  return new Date(date).toLocaleDateString('ru-RU')
 }
 
-// Первоначальный поиск если есть q в URL
 onMounted(() => {
   if (query.value) handleSearch()
 })
