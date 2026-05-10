@@ -2,7 +2,7 @@
   <div class="max-w-6xl mx-auto py-8 px-4 space-y-8">
     <div class="flex flex-col md:flex-row md:items-end md:justify-between gap-4">
       <div>
-        <h1 class="text-3xl font-bold text-white">Schedule</h1>
+        <h1 class="text-3xl font-bold text-white">Расписание</h1>
         <p class="text-slate-400 text-sm">{{ weekLabel }}</p>
       </div>
 
@@ -11,14 +11,14 @@
           v-model="groupFilter"
           type="text"
           :disabled="groupLocked"
-          placeholder="Group (e.g. P-21)"
+          placeholder="Группа П-21"
           class="bg-slate-900 border border-white/10 rounded-lg px-4 py-2 text-white text-sm disabled:opacity-60"
         />
         <button
           type="submit"
           class="bg-blue-600 hover:bg-blue-500 text-white px-4 py-2 rounded-lg text-sm font-semibold transition-all"
         >
-          Apply
+          Принять
         </button>
       </form>
     </div>
@@ -33,7 +33,7 @@
 
     <div v-else class="space-y-6">
       <div v-if="schedule.length === 0" class="bg-slate-900 border border-dashed border-white/10 rounded-2xl p-12 text-center text-slate-500">
-        Schedule is empty for the selected filter.
+        Расписание пусто.
       </div>
 
       <div v-for="day in orderedDays" :key="day.value" class="bg-slate-900 border border-white/5 rounded-2xl p-6">
@@ -42,10 +42,10 @@
             <h2 class="text-xl font-bold text-white">{{ day.label }}</h2>
             <p class="text-xs text-slate-500 mt-1">{{ formatDayDate(day.value) }}</p>
           </div>
-          <span class="text-xs text-slate-500 uppercase tracking-widest">{{ dayItems(day.value).length }} pairs</span>
+          <span class="text-xs text-slate-500 uppercase tracking-widest">{{ dayItems(day.value).length }} пар</span>
         </div>
 
-        <div v-if="dayItems(day.value).length === 0" class="text-sm text-slate-500 italic">No pairs</div>
+        <div v-if="dayItems(day.value).length === 0" class="text-sm text-slate-500 italic">Нет пар</div>
 
         <div v-else class="space-y-3">
           <div
@@ -57,14 +57,14 @@
               <div>
                 <div class="text-white font-semibold">{{ item.subject }}</div>
                 <div class="text-sm text-slate-400 mt-1">
-                  Pair {{ item.pair_number }} • {{ item.starts_at }}{{ item.ends_at ? `-${item.ends_at}` : '' }}
+                  Пара {{ item.pair_number }} • {{ item.starts_at }}{{ item.ends_at ? `-${item.ends_at}` : '' }}
                 </div>
               </div>
 
               <div class="text-sm text-slate-300">
-                <div><span class="text-slate-500">Group:</span> {{ item.group_name }}</div>
-                <div><span class="text-slate-500">Teacher:</span> {{ item.teacher_name || item.teacher_id }}</div>
-                <div v-if="item.room"><span class="text-slate-500">Room:</span> {{ item.room }}</div>
+                <div><span class="text-slate-500">Группа:</span> {{ item.group_name }}</div>
+                <div><span class="text-slate-500">Преподаватель:</span> {{ item.teacher_name || item.teacher_id }}</div>
+                <div v-if="item.room"><span class="text-slate-500">Аудитория:</span> {{ item.room }}</div>
               </div>
             </div>
           </div>
@@ -88,13 +88,13 @@ const groupFilter = ref('')
 const errorMessage = ref('')
 
 const orderedDays = [
-  { value: 1, label: 'Monday' },
-  { value: 2, label: 'Tuesday' },
-  { value: 3, label: 'Wednesday' },
-  { value: 4, label: 'Thursday' },
-  { value: 5, label: 'Friday' },
-  { value: 6, label: 'Saturday' },
-  { value: 7, label: 'Sunday' }
+  { value: 1, label: 'Понедельник' },
+  { value: 2, label: 'Вторник' },
+  { value: 3, label: 'Среда' },
+  { value: 4, label: 'Четверг' },
+  { value: 5, label: 'Пятница' },
+  { value: 6, label: 'Суббота' },
+  { value: 7, label: 'Воскресенье' }
 ]
 
 const groupLocked = computed(() => {

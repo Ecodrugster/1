@@ -18,8 +18,8 @@
     <div class="grid grid-cols-1 xl:grid-cols-3 gap-6">
       <section class="xl:col-span-2 bg-slate-900 border border-white/5 rounded-2xl p-6">
         <div class="flex items-center justify-between mb-5">
-          <h3 class="text-white font-bold text-lg">Recent Actions</h3>
-          <div class="text-xs text-slate-500">Live data</div>
+          <h3 class="text-white font-bold text-lg">Последние действия</h3>
+          <div class="text-xs text-slate-500">Актуальные данные</div>
         </div>
 
         <div v-if="loading" class="space-y-3">
@@ -27,7 +27,7 @@
         </div>
 
         <div v-else-if="recentActions.length === 0" class="text-slate-500 text-sm">
-          No actions in log yet.
+           Нет действий.
         </div>
 
         <div v-else class="space-y-3">
@@ -47,31 +47,31 @@
       </section>
 
       <section class="bg-slate-900 border border-white/5 rounded-2xl p-6">
-        <h3 class="text-white font-bold text-lg mb-5">System Summary</h3>
+        <h3 class="text-white font-bold text-lg mb-5">Системная сводка</h3>
         <div class="space-y-3 text-sm">
           <div class="flex justify-between">
-            <span class="text-slate-400">Students</span>
+            <span class="text-slate-400">Студенты</span>
             <span class="text-white font-semibold">{{ stats.users.total_students }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Teachers</span>
+            <span class="text-slate-400">Преподаватели</span>
             <span class="text-white font-semibold">{{ stats.users.total_teachers }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Admins</span>
+            <span class="text-slate-400">Админы</span>
             <span class="text-white font-semibold">{{ stats.users.total_admins }}</span>
           </div>
           <div class="h-px bg-white/5 my-2"></div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Posts in 7 days</span>
+            <span class="text-slate-400">Посты за 7 дней</span>
             <span class="text-white font-semibold">{{ stats.posts.posts_last_7_days }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">Pending clubs</span>
+            <span class="text-slate-400">Запросы клубов</span>
             <span class="text-white font-semibold">{{ stats.clubs.pending_club_requests }}</span>
           </div>
           <div class="flex justify-between">
-            <span class="text-slate-400">News in DB</span>
+            <span class="text-slate-400">Новостей в базе данных</span>
             <span class="text-white font-semibold">{{ stats.news.total_news }}</span>
           </div>
         </div>
@@ -112,29 +112,29 @@ const stats = ref({
 })
 
 const statCards = computed(() => ([
-  { label: 'Total users', value: stats.value.users.total_users },
-  { label: 'Total posts', value: stats.value.posts.total_posts },
-  { label: 'Active clubs', value: stats.value.clubs.active_clubs },
-  { label: 'Club requests', value: stats.value.clubs.pending_club_requests }
+  { label: 'Всего пользователей', value: stats.value.users.total_users },
+  { label: 'Всего постов', value: stats.value.posts.total_posts },
+  { label: 'Активные клубы', value: stats.value.clubs.active_clubs },
+  { label: 'Запросы клубов', value: stats.value.clubs.pending_club_requests }
 ]))
 
 const actionLabel = (action) => {
   const dictionary = {
-    'user.role.updated': 'changed user role',
-    'user.group.updated': 'updated user group',
-    'post.deleted': 'deleted a post',
-    'news.deleted': 'deleted news',
-    'news.updated': 'updated news',
-    'club.created': 'created club',
-    'club.updated': 'updated club',
-    'club.deleted': 'deleted club',
-    'club.request.approved': 'approved club request',
-    'club.request.rejected': 'rejected club request',
-    'schedule.created': 'created schedule pair',
-    'schedule.updated': 'updated schedule pair',
-    'schedule.deleted': 'deleted schedule pair'
+    'user.role.updated': 'изменил роль пользователя',
+    'user.group.updated': 'изменил группу пользователя',
+    'post.deleted': 'удалён пост',
+    'news.deleted': 'удалёна новость',
+    'news.updated': 'обновлена новость',
+    'club.created': 'создан клуб',
+    'club.updated': 'обновлён клуб',
+    'club.deleted': 'удалён клуб',
+    'club.request.approved': 'одобрен запрос клуба',
+    'club.request.rejected': 'отклонён запрос клуба',
+    'schedule.created': 'добавлена пара в расписании',
+    'schedule.updated': 'обновлена пара в расписании',
+    'schedule.deleted': 'удалена пара в расписании'
   }
-  return dictionary[action] || 'performed action'
+  return dictionary[action] || 'выполнил действие'
 }
 
 const actionTarget = (item) => {

@@ -1,9 +1,9 @@
-﻿<template>
+<template>
   <div class="max-w-6xl mx-auto py-8 px-4">
     <div class="flex justify-between items-center mb-8">
       <div>
-        <h1 class="text-3xl font-bold text-white">Teacher Journal</h1>
-        <p class="text-slate-400">Grades and attendance by schedule pairs</p>
+        <h1 class="text-3xl font-bold text-white">Журнал преподавателя</h1>
+        <p class="text-slate-400">Оценки и посещаемость по парам расписания</p>
       </div>
     </div>
 
@@ -11,12 +11,12 @@
       <div class="lg:col-span-1 space-y-4">
         <div class="bg-slate-900 border border-white/5 rounded-2xl p-6 shadow-xl">
           <div class="flex items-center justify-between mb-4">
-            <h2 class="text-xl font-bold text-white">Students</h2>
+            <h2 class="text-xl font-bold text-white">Студенты</h2>
             <select
               v-model="selectedGroup"
               class="bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-xs text-white"
             >
-              <option value="">All groups</option>
+              <option value="">Все группы</option>
               <option v-for="g in taughtGroups" :key="g" :value="g">{{ g }}</option>
             </select>
           </div>
@@ -35,14 +35,14 @@
               <div class="text-left overflow-hidden">
                 <div class="text-sm font-medium text-white truncate">{{ student.display_name || student.email }}</div>
                 <div class="text-[10px] text-slate-500 uppercase">
-                  {{ student.group_name || 'No group' }}
+                  {{ student.group_name || 'Без группы' }}
                 </div>
               </div>
             </button>
           </div>
 
           <div v-if="filteredStudents.length === 0" class="text-slate-500 text-sm mt-4">
-            No students in the selected group yet.
+            В выбранной группе пока нет студентов.
           </div>
         </div>
       </div>
@@ -55,31 +55,31 @@
             </div>
             <div>
               <h2 class="text-2xl font-bold text-white">{{ selectedStudent.display_name || selectedStudent.email }}</h2>
-              <p class="text-slate-400">Group: {{ selectedStudent.group_name || 'not set' }}</p>
+              <p class="text-slate-400">Группа: {{ selectedStudent.group_name || 'не указана' }}</p>
             </div>
           </div>
 
           <form @submit.prevent="submitGrade" class="space-y-6">
             <div>
-              <label class="block text-sm font-medium text-slate-400 mb-2">Pair from schedule</label>
+              <label class="block text-sm font-medium text-slate-400 mb-2">Пара из расписания</label>
               <select
                 v-model="form.schedule_id"
                 class="w-full bg-slate-800 border-none rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50"
                 required
               >
-                <option value="" disabled>Select pair</option>
+                <option value="" disabled>Выберите пару</option>
                 <option v-for="item in availablePairs" :key="item.id" :value="item.id">
                   {{ formatPairLabel(item) }}
                 </option>
               </select>
               <p v-if="availablePairs.length === 0" class="text-xs text-amber-400 mt-2">
-                No schedule pairs for this group in your timetable.
+                В вашем расписании нет пар для этой группы.
               </p>
             </div>
 
             <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
-                <label class="block text-sm font-medium text-slate-400 mb-2">Lesson date</label>
+                <label class="block text-sm font-medium text-slate-400 mb-2">Дата занятия</label>
                 <input
                   v-model="form.lesson_date"
                   type="date"
@@ -88,7 +88,7 @@
                 />
               </div>
               <div>
-                <label class="block text-sm font-medium text-slate-400 mb-2">Grade (1-12)</label>
+                <label class="block text-sm font-medium text-slate-400 mb-2">Оценка (1-12)</label>
                 <input
                   v-model.number="form.value"
                   type="number"
@@ -101,11 +101,11 @@
             </div>
 
             <div>
-              <label class="block text-sm font-medium text-slate-400 mb-2">Comment for grade</label>
+              <label class="block text-sm font-medium text-slate-400 mb-2">Комментарий к оценке</label>
               <textarea
                 v-model="form.comment"
                 rows="3"
-                placeholder="Why this grade was given..."
+                placeholder="Почему была выставлена эта оценка..."
                 class="w-full bg-slate-800 border-none rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50 resize-none"
               ></textarea>
             </div>
@@ -116,24 +116,24 @@
                 :disabled="submittingGrade || !form.schedule_id"
                 class="bg-blue-600 hover:bg-blue-500 text-white px-8 py-3 rounded-xl font-bold shadow-lg shadow-blue-600/20 transition-all disabled:opacity-50"
               >
-                {{ submittingGrade ? 'Saving...' : 'Add Grade' }}
+                {{ submittingGrade ? 'Сохранение...' : 'Добавить оценку' }}
               </button>
             </div>
           </form>
 
           <div class="mt-8 p-5 rounded-xl border border-white/10 bg-white/5">
-            <h3 class="text-white font-semibold mb-4">Attendance</h3>
+            <h3 class="text-white font-semibold mb-4">Посещаемость</h3>
             <div class="grid grid-cols-1 md:grid-cols-3 gap-3">
               <select v-model="attendance.status" class="bg-slate-800 border border-white/10 rounded-lg px-4 py-3 text-white text-sm">
-                <option value="present">Present</option>
-                <option value="late">Late</option>
-                <option value="absent">Absent</option>
-                <option value="excused">Excused</option>
+                <option value="present">Присутствует</option>
+                <option value="late">Опоздал</option>
+                <option value="absent">Отсутствует</option>
+                <option value="excused">Уважительная причина</option>
               </select>
               <input
                 v-model="attendance.comment"
                 type="text"
-                placeholder="Comment"
+                placeholder="Комментарий"
                 class="bg-slate-800 border border-white/10 rounded-lg px-4 py-3 text-white text-sm md:col-span-2"
               />
             </div>
@@ -143,45 +143,45 @@
                 :disabled="submittingAttendance || !form.schedule_id"
                 class="px-6 py-2.5 rounded-lg text-sm font-semibold bg-emerald-600 hover:bg-emerald-500 text-white disabled:opacity-50"
               >
-                {{ submittingAttendance ? 'Saving...' : 'Mark Attendance' }}
+                {{ submittingAttendance ? 'Сохранение...' : 'Отметить посещаемость' }}
               </button>
             </div>
           </div>
 
           <div class="mt-10 pt-8 border-t border-white/5">
-            <h3 class="text-lg font-bold text-white mb-4">Recent Grades</h3>
+            <h3 class="text-lg font-bold text-white mb-4">Последние оценки</h3>
             <div class="space-y-3 mb-8">
               <div v-for="g in studentGrades" :key="g.id" class="bg-white/5 p-4 rounded-xl flex justify-between items-center">
                 <div>
                   <div class="text-sm font-bold text-white">{{ g.subject }}</div>
-                  <div class="text-xs text-slate-400 mt-1">{{ g.lesson_date || formatDate(g.created_at) }} • Pair {{ g.pair_number }}</div>
-                  <div class="text-xs text-slate-500">{{ g.comment || 'No comment' }}</div>
+                  <div class="text-xs text-slate-400 mt-1">{{ g.lesson_date || formatDate(g.created_at) }} • Пара {{ g.pair_number }}</div>
+                  <div class="text-xs text-slate-500">{{ g.comment || 'Без комментария' }}</div>
                 </div>
                 <div class="text-2xl font-bold text-blue-500">{{ g.value }}</div>
               </div>
-              <div v-if="studentGrades.length === 0" class="text-center text-slate-500 py-4 italic text-sm">No grades yet</div>
+              <div v-if="studentGrades.length === 0" class="text-center text-slate-500 py-4 italic text-sm">Оценок пока нет</div>
             </div>
 
-            <h3 class="text-lg font-bold text-white mb-4">Recent Attendance</h3>
+            <h3 class="text-lg font-bold text-white mb-4">Последняя посещаемость</h3>
             <div class="space-y-3">
               <div v-for="a in attendanceHistory" :key="a.id" class="bg-white/5 p-4 rounded-xl flex justify-between items-center">
                 <div>
                   <div class="text-sm font-semibold text-white">{{ a.subject }}</div>
-                  <div class="text-xs text-slate-400 mt-1">{{ a.lesson_date }} • Pair {{ a.pair_number }}</div>
-                  <div class="text-xs text-slate-500">{{ a.comment || 'No comment' }}</div>
+                  <div class="text-xs text-slate-400 mt-1">{{ a.lesson_date }} • Пара {{ a.pair_number }}</div>
+                  <div class="text-xs text-slate-500">{{ a.comment || 'Без комментария' }}</div>
                 </div>
                 <div class="text-xs font-bold uppercase" :class="attendanceStatusClass(a.status)">
                   {{ attendanceStatusLabel(a.status) }}
                 </div>
               </div>
-              <div v-if="attendanceHistory.length === 0" class="text-center text-slate-500 py-4 italic text-sm">No attendance records yet</div>
+              <div v-if="attendanceHistory.length === 0" class="text-center text-slate-500 py-4 italic text-sm">Записей о посещаемости пока нет</div>
             </div>
           </div>
         </div>
 
         <div v-else class="h-full bg-slate-900/50 border border-dashed border-white/10 rounded-2xl flex flex-col items-center justify-center text-slate-500 p-12">
           <div class="text-6xl mb-4">📘</div>
-          <p>Select a student on the left to work with grades and attendance</p>
+          <p>Выберите студента слева для работы с оценками и посещаемостью</p>
         </div>
       </div>
     </div>
@@ -234,15 +234,15 @@ const formatDate = (date) => {
 
 const dayName = (day) => {
   const names = {
-    1: 'Monday',
-    2: 'Tuesday',
-    3: 'Wednesday',
-    4: 'Thursday',
-    5: 'Friday',
-    6: 'Saturday',
-    7: 'Sunday'
+    1: 'Понедельник',
+    2: 'Вторник',
+    3: 'Среда',
+    4: 'Четверг',
+    5: 'Пятница',
+    6: 'Суббота',
+    7: 'Воскресенье'
   }
-  return names[Number(day)] || 'Unknown day'
+  return names[Number(day)] || 'День не указан'
 }
 
 const avatarInitial = (value) => {
@@ -251,10 +251,10 @@ const avatarInitial = (value) => {
 }
 
 const attendanceStatusLabel = (status) => {
-  if (status === 'present') return 'Present'
-  if (status === 'late') return 'Late'
-  if (status === 'excused') return 'Excused'
-  return 'Absent'
+  if (status === 'present') return 'Присутствует'
+  if (status === 'late') return 'Опоздал'
+  if (status === 'excused') return 'Уважительная причина'
+  return 'Отсутствует'
 }
 
 const attendanceStatusClass = (status) => {
@@ -294,7 +294,7 @@ const availablePairs = computed(() => {
 })
 
 const formatPairLabel = (item) => {
-  return `${dayName(item.day_of_week)}, Pair ${item.pair_number} • ${item.subject} • ${item.group_name}`
+  return `${dayName(item.day_of_week)}, Пара ${item.pair_number} • ${item.subject} • ${item.group_name}`
 }
 
 const fetchStudents = async () => {
@@ -377,7 +377,7 @@ const submitGrade = async () => {
 
     form.comment = ''
     await fetchStudentGrades(selectedStudent.value.uid)
-    alert('Grade added successfully')
+    alert('Оценка успешно добавлена')
   } catch (e) {
     alert('Error: ' + (e?.data?.error || e.message))
   } finally {
@@ -403,7 +403,7 @@ const markAttendance = async () => {
 
     attendance.comment = ''
     await fetchAttendance()
-    alert('Attendance saved')
+    alert('Посещаемость сохранена')
   } catch (e) {
     alert('Attendance error: ' + (e?.data?.error || e.message))
   } finally {

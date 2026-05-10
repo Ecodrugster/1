@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="max-w-6xl mx-auto py-8 px-4">
     <div class="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
       <div>
@@ -87,7 +87,7 @@
         <div class="flex items-center justify-between mb-2">
           <h3 class="text-white font-semibold text-lg">{{ club.name }}</h3>
           <span class="px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider" :class="statusClass(club.status)">
-            {{ club.status || 'approved' }}
+            {{ club.status === 'pending' ? 'На модерации' : club.status === 'rejected' ? 'Отклонен' : 'Одобрен' }}
           </span>
         </div>
 
@@ -127,7 +127,7 @@
             disabled
             class="flex-grow py-2.5 bg-green-500/10 border border-green-500/20 text-green-400 rounded-lg text-sm font-medium"
           >
-            Вы участник ?
+            Вы участник ✅
           </button>
 
           <button

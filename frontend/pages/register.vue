@@ -7,7 +7,7 @@
 
     <form @submit.prevent="handleRegister" class="space-y-6">
       <div>
-        <label class="block text-sm font-medium text-slate-300 mb-2">Email</label>
+        <label class="block text-sm font-medium text-slate-300 mb-2">Электронная почта</label>
         <input 
           v-model="email"
           type="email" 

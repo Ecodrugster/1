@@ -1,11 +1,11 @@
-﻿<template>
+<template>
   <div class="space-y-6">
     <div class="flex justify-between items-center">
-      <h2 class="text-2xl font-bold text-white">Users</h2>
+      <h2 class="text-2xl font-bold text-white">Пользователи</h2>
       <input
         v-model="search"
         type="text"
-        placeholder="Search by name or email..."
+        placeholder="Поиск по имени или почте..."
         class="bg-slate-900 border border-white/10 rounded-xl px-4 py-2 text-sm text-white focus:ring-2 focus:ring-blue-500/50 w-72"
       />
     </div>
@@ -18,11 +18,11 @@
       <table class="w-full text-left border-collapse">
         <thead>
           <tr class="bg-white/5 text-[10px] uppercase tracking-wider text-slate-500 font-bold">
-            <th class="px-6 py-4">User</th>
-            <th class="px-6 py-4">Email</th>
-            <th class="px-6 py-4">Role</th>
-            <th class="px-6 py-4">Group</th>
-            <th class="px-6 py-4">Actions</th>
+            <th class="px-6 py-4">Пользователь</th>
+            <th class="px-6 py-4">Почта</th>
+            <th class="px-6 py-4">Роль</th>
+            <th class="px-6 py-4">Группа</th>
+            <th class="px-6 py-4">Действия</th>
           </tr>
         </thead>
         <tbody class="divide-y divide-white/5">
@@ -33,7 +33,7 @@
                 <div v-else class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-bold text-slate-500">
                   {{ (user.display_name || user.email || 'U')[0].toUpperCase() }}
                 </div>
-                <div class="text-sm font-medium text-white">{{ user.display_name || 'No name' }}</div>
+                <div class="text-sm font-medium text-white">{{ user.display_name || 'Без имени' }}</div>
               </div>
             </td>
 
@@ -52,7 +52,7 @@
               <input
                 v-model="user.groupDraft"
                 type="text"
-                placeholder="e.g. P-21"
+                placeholder="напр. П-21"
                 class="bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-xs text-white w-28"
               />
             </td>
@@ -65,9 +65,9 @@
                   :disabled="updatingRole === user.uid"
                   class="bg-slate-800 border-none rounded-lg text-xs font-bold text-white px-3 py-2 focus:ring-2 focus:ring-blue-500/50"
                 >
-                  <option value="student">Student</option>
-                  <option value="teacher">Teacher</option>
-                  <option value="admin">Admin</option>
+                  <option value="student">Студент</option>
+                  <option value="teacher">Преподаватель</option>
+                  <option value="admin">Админ</option>
                 </select>
 
                 <button
@@ -75,7 +75,7 @@
                   :disabled="updatingGroup === user.uid"
                   class="px-3 py-2 rounded-lg text-xs font-semibold bg-blue-600 hover:bg-blue-500 text-white disabled:opacity-50"
                 >
-                  Save Group
+                  Сохранить группу
                 </button>
               </div>
             </td>
@@ -83,8 +83,8 @@
         </tbody>
       </table>
 
-      <div v-if="loading" class="p-12 text-center text-slate-500 animate-pulse">Loading users...</div>
-      <div v-else-if="filteredUsers.length === 0" class="p-12 text-center text-slate-500">No users found.</div>
+      <div v-if="loading" class="p-12 text-center text-slate-500 animate-pulse">Загрузка пользователей...</div>
+      <div v-else-if="filteredUsers.length === 0" class="p-12 text-center text-slate-500">Пользователи не найдены.</div>
     </div>
   </div>
 </template>
@@ -105,9 +105,9 @@ const updatingGroup = ref(null)
 const errorMessage = ref('')
 
 const roleLabel = (role) => {
-  if (role === 'admin') return 'Admin'
-  if (role === 'teacher') return 'Teacher'
-  return 'Student'
+  if (role === 'admin') return 'Админ'
+  if (role === 'teacher') return 'Преподаватель'
+  return 'Студент'
 }
 
 const roleBadgeClass = (role) => {
@@ -138,7 +138,7 @@ const fetchUsers = async () => {
     console.error('Failed to fetch users:', e)
     const status = e?.status || e?.response?.status
     const message = e?.data?.error || e?.message || 'Failed to load users'
-    errorMessage.value = `Could not load users (${status || 'no-status'}): ${message}`
+    errorMessage.value = `Не удалось загрузить пользователей (${status || 'no-status'}): ${message}`
   } finally {
     loading.value = false
   }
@@ -154,7 +154,7 @@ const filteredUsers = computed(() => {
 })
 
 const updateRole = async (user, newRole) => {
-  if (!confirm(`Change role for ${user.display_name || user.email} to ${roleLabel(newRole)}?`)) return
+  if (!confirm(`Изменить роль для ${user.display_name || user.email} на ${roleLabel(newRole)}?`)) return
 
   updatingRole.value = user.uid
   try {
@@ -181,7 +181,7 @@ const updateGroup = async (user) => {
     })
     user.group_name = groupName
     user.group = groupName
-    alert('Group saved')
+    alert('Группа сохранена')
   } catch (e) {
     alert('Group update error: ' + (e?.data?.error || e.message))
   } finally {
