@@ -12,7 +12,7 @@
             to="/"
             class="hidden sm:inline-flex text-xs px-3 py-1.5 rounded-lg bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all"
           >
-            На главную
+            Home
           </NuxtLink>
           <div class="text-right">
             <div class="text-xs font-bold text-white">{{ userDisplayName }}</div>
@@ -42,19 +42,19 @@ const userStore = useUserStore()
 const route = useRoute()
 
 const userDisplayName = computed(() => {
-  return userStore.user?.displayName || userStore.profile?.display_name || userStore.profile?.displayName || userStore.profile?.email || 'Администратор'
+  return userStore.user?.displayName || userStore.profile?.display_name || userStore.profile?.displayName || userStore.profile?.email || 'Administrator'
 })
 
 const currentPageTitle = computed(() => {
   const titles = {
-    '/admin': 'Обзор системы',
-    '/admin/users': 'Управление пользователями',
-    '/admin/schedule': 'Расписание пар',
-    '/admin/news': 'Управление новостями',
-    '/admin/clubs': 'Управление клубами',
-    '/admin/moderation': 'Модерация контента'
+    '/admin': 'System Dashboard',
+    '/admin/users': 'User Management',
+    '/admin/schedule': 'Schedule Management',
+    '/admin/news': 'News Management',
+    '/admin/clubs': 'Club Management',
+    '/admin/moderation': 'Content Moderation'
   }
-  return titles[route.path] || 'Панель управления'
+  return titles[route.path] || 'Admin Panel'
 })
 </script>
 

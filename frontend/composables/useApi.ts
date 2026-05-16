@@ -1,3 +1,5 @@
+import type { Auth } from 'firebase/auth'
+
 export const useApi = () => {
   const userStore = useUserStore()
   const config = useRuntimeConfig()
@@ -6,7 +8,7 @@ export const useApi = () => {
   const ensureToken = async (forceRefresh = false) => {
     if (!process.client) return userStore.token
 
-    const { $auth } = useNuxtApp()
+    const { $auth } = useNuxtApp() as { $auth: Auth | null }
     const currentUser = $auth?.currentUser
     if (!currentUser) return userStore.token
 
@@ -22,10 +24,10 @@ export const useApi = () => {
     return userStore.token
   }
 
-  const request = async (url: string, options: any = {}) => {
+  const request = async <T>(url: string, options: any = {}) => {
     await ensureToken(false)
 
-    const headers = {
+    const headers: Record<string, string> = {
       ...options.headers
     }
 
@@ -33,20 +35,20 @@ export const useApi = () => {
       headers['Authorization'] = `Bearer ${userStore.token}`
     }
 
-    return $fetch(`${baseUrl}${url}`, {
+    return $fetch<T>(`${baseUrl}${url}`, {
       ...options,
       headers
     })
   }
 
-  const fetchApi = async (url: string, options: any = {}) => {
+  const fetchApi = async <T = any>(url: string, options: any = {}) => {
     try {
-      return await request(url, options)
+      return await request<T>(url, options)
     } catch (e: any) {
       const status = e?.status || e?.response?.status
       if (status === 401 && process.client) {
         await ensureToken(true)
-        return await request(url, options)
+        return await request<T>(url, options)
       }
       throw e
     }

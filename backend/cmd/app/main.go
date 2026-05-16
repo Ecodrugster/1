@@ -6,6 +6,7 @@ import (
 	"os"
 	"path/filepath"
 	"runtime"
+	"strings"
 
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
@@ -82,6 +83,8 @@ func main() {
 
 	// Initialize Firestore
 	repositories.InitFirestore()
+	// Initialize MongoDB for chats
+	repositories.InitMongo()
 
 	// Initialize Firebase
 	middleware.InitFirebase()
@@ -134,6 +137,12 @@ func main() {
 		v1.GET("/grades", handlers.GetUserGrades)
 		v1.GET("/schedule", handlers.GetSchedule)
 
+		// Chat (MongoDB)
+		v1.GET("/chat/messages", handlers.GetChatMessages)
+		v1.POST("/chat/messages", handlers.SendChatMessage)
+		v1.POST("/chat/messages/read", handlers.MarkChatAsRead)
+		v1.GET("/chat/unread-count", handlers.GetChatUnreadCount)
+
 		// Teacher routes
 		teacher := v1.Group("/teacher")
 		teacher.Use(middleware.TeacherRequired())
@@ -171,8 +180,14 @@ func main() {
 		}
 	}
 
-	log.Println("Server starting on :8080")
-	if err := r.Run(":8080"); err != nil {
+	port := strings.TrimSpace(os.Getenv("PORT"))
+	if port == "" {
+		port = "8080"
+	}
+
+	addr := ":" + port
+	log.Printf("Server starting on %s", addr)
+	if err := r.Run(addr); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
 }

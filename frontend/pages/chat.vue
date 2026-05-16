@@ -62,7 +62,7 @@
               >
                 <p>{{ msg.text }}</p>
                 <div class="text-[9px] mt-1 opacity-50 text-right">
-                  {{ msg.createdAt?.toDate ? new Date(msg.createdAt.toDate()).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...' }}
+                  {{ msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...' }}
                 </div>
               </div>
             </div>
@@ -98,25 +98,13 @@
 </template>
 
 <script setup>
-import { 
-  collection, 
-  query, 
-  where, 
-  orderBy, 
-  onSnapshot, 
-  addDoc, 
-  serverTimestamp, 
-  or,
-  and
-} from 'firebase/firestore'
-
 definePageMeta({
   middleware: 'auth'
 })
 
-const { $firestore } = useNuxtApp()
 const userStore = useUserStore()
 const { fetchApi: api } = useApi()
+const route = useRoute()
 
 const users = ref([])
 const searchQuery = ref('')
@@ -125,7 +113,7 @@ const messages = ref([])
 const newMessage = ref('')
 const messageContainer = ref(null)
 
-let unsubscribeMessages = null
+let pollTimer = null
 
 const filteredUsers = computed(() => {
   return users.value.filter(u => 
@@ -135,80 +123,108 @@ const filteredUsers = computed(() => {
   )
 })
 
+const stopPolling = () => {
+  if (pollTimer) {
+    clearInterval(pollTimer)
+    pollTimer = null
+  }
+}
+
+const scrollToBottom = () => {
+  nextTick(() => {
+    if (messageContainer.value) {
+      messageContainer.value.scrollTop = messageContainer.value.scrollHeight
+    }
+  })
+}
+
+const markAsRead = async (otherUserId) => {
+  try {
+    await api('/chat/messages/read', {
+      method: 'POST',
+      body: {
+        user_id: otherUserId
+      }
+    })
+  } catch (e) {
+    console.error('[Chat Debug] Failed to mark messages as read:', e)
+  }
+}
+
+const fetchMessages = async () => {
+  if (!selectedUser.value) return
+
+  try {
+    const otherUserId = selectedUser.value.uid
+    const data = await api(`/chat/messages?user_id=${encodeURIComponent(otherUserId)}&limit=200`)
+    const nextMessages = data || []
+
+    const prevLastId = messages.value.length ? messages.value[messages.value.length - 1].id : null
+    const nextLastId = nextMessages.length ? nextMessages[nextMessages.length - 1].id : null
+
+    messages.value = nextMessages
+
+    await markAsRead(otherUserId)
+
+    if (prevLastId !== nextLastId) {
+      scrollToBottom()
+    }
+  } catch (e) {
+    console.error('[Chat Debug] Failed to fetch messages:', e)
+  }
+}
+
+const startPollingMessages = () => {
+  stopPolling()
+  fetchMessages()
+  pollTimer = setInterval(fetchMessages, 2500)
+}
+
 const fetchUsers = async () => {
   try {
     const data = await api('/users')
     console.log('[Chat Debug] Fetched Users:', data)
     users.value = data || []
+
+    const targetUID = typeof route.query.uid === 'string' ? route.query.uid.trim() : ''
+    if (targetUID) {
+      const userFromQuery = users.value.find((u) => u.uid === targetUID)
+      if (userFromQuery) {
+        selectUser(userFromQuery)
+      }
+    }
   } catch (e) {
     console.error('[Chat Debug] Failed to fetch users:', e)
   }
 }
 
 const selectUser = (user) => {
-  messages.value = [] // Clear old messages immediately
+  messages.value = []
   selectedUser.value = user
-  startListeningMessages(user.uid)
-}
-
-const startListeningMessages = (otherUserId) => {
-  if (unsubscribeMessages) unsubscribeMessages()
-  
-  const currentUserId = userStore.user.uid
-  
-  // Chat between two users
-  const chatId = [currentUserId, otherUserId].sort().join('_')
-  
-  const q = query(
-    collection($firestore, 'chats', chatId, 'messages'),
-    orderBy('createdAt', 'asc')
-  )
-
-  unsubscribeMessages = onSnapshot(q, (snapshot) => {
-    messages.value = snapshot.docs.map(doc => ({
-      id: doc.id,
-      ...doc.data()
-    }))
-
-    // Помечаем входящие сообщения как прочитанные
-    snapshot.docs.forEach(async (doc) => {
-      const data = doc.data()
-      if (data.receiverId === currentUserId && !data.read) {
-        const { updateDoc } = await import('firebase/firestore')
-        await updateDoc(doc.ref, { read: true })
-      }
-    })
-    
-    // Auto scroll to bottom
-    nextTick(() => {
-      if (messageContainer.value) {
-        messageContainer.value.scrollTop = messageContainer.value.scrollHeight
-      }
-    })
-  })
+  startPollingMessages()
 }
 
 const sendMessage = async () => {
   if (!newMessage.value.trim() || !selectedUser.value) return
-  
-  const currentUserId = userStore.user.uid
+
   const otherUserId = selectedUser.value.uid
-  const chatId = [currentUserId, otherUserId].sort().join('_')
-  
+
   const text = newMessage.value
   newMessage.value = ''
-  
+
   try {
-    await addDoc(collection($firestore, 'chats', chatId, 'messages'), {
-      text,
-      senderId: currentUserId,
-      receiverId: otherUserId,
-      participants: [currentUserId, otherUserId],
-      createdAt: serverTimestamp(),
-      read: false
+    await api('/chat/messages', {
+      method: 'POST',
+      body: {
+        receiver_id: otherUserId,
+        text
+      }
     })
+
+    await fetchMessages()
+    scrollToBottom()
   } catch (e) {
-    console.error('Error sending message:', e)
+    console.error('[Chat Debug] Error sending message:', e)
   }
 }
 
@@ -217,6 +233,7 @@ onMounted(() => {
 })
 
 onUnmounted(() => {
-  if (unsubscribeMessages) unsubscribeMessages()
+  stopPolling()
 })
 </script>
+

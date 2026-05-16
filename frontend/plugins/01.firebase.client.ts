@@ -1,8 +1,17 @@
 import { initializeApp } from 'firebase/app'
 import { getAuth } from 'firebase/auth'
 import { getFirestore } from 'firebase/firestore'
+import type { FirebaseApp } from 'firebase/app'
+import type { Auth } from 'firebase/auth'
+import type { Firestore } from 'firebase/firestore'
 
-export default defineNuxtPlugin((nuxtApp) => {
+type FirebaseProvides = {
+  firebaseApp: FirebaseApp | null
+  auth: Auth | null
+  firestore: Firestore | null
+}
+
+export default defineNuxtPlugin<FirebaseProvides>(() => {
   const config = useRuntimeConfig()
 
   const firebaseConfig = {
@@ -26,8 +35,8 @@ export default defineNuxtPlugin((nuxtApp) => {
       provide: {
         firebaseApp: null,
         auth: null,
-        firestore: null,
-      },
+        firestore: null
+      }
     }
   }
 
@@ -38,8 +47,8 @@ export default defineNuxtPlugin((nuxtApp) => {
   return {
     provide: {
       firebaseApp: app,
-      auth: auth,
-      firestore: db,
+      auth,
+      firestore: db
     }
   }
 })

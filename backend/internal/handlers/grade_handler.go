@@ -97,10 +97,15 @@ func AddGrade(c *gin.Context) {
 		return
 	}
 
+	teacherName := asString(scheduleData["teacher_name"])
+	if teacherName == "" {
+		teacherName = getUserDisplayNameByUID(c, teacherID, nil)
+	}
+
 	grade := map[string]interface{}{
 		"student_id":   input.StudentID,
 		"teacher_id":   teacherID,
-		"teacher_name": asString(scheduleData["teacher_name"]),
+		"teacher_name": teacherName,
 		"schedule_id":  input.ScheduleID,
 		"subject":      asString(scheduleData["subject"]),
 		"group_name":   asString(scheduleData["group_name"]),
