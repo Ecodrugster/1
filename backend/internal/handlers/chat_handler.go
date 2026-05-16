@@ -1,8 +1,14 @@
 package handlers
 
 import (
+	"crypto/rand"
+	"encoding/hex"
 	"fmt"
+	"io"
+	"mime/multipart"
 	"net/http"
+	"os"
+	"path/filepath"
 	"sort"
 	"strconv"
 	"strings"
@@ -15,19 +21,28 @@ import (
 )
 
 const (
-	defaultChatLimit = 100
-	maxChatLimit     = 300
-	maxMessageLength = 10000
+	defaultChatLimit      = 100
+	maxChatLimit          = 300
+	maxMessageLength      = 10000
+	maxChatImageSizeBytes = 10 * 1024 * 1024
+
+	defaultChatUploadRoot = "uploads"
+	chatUploadSubDir      = "chat"
+
+	messageTypeText  = "text"
+	messageTypeImage = "image"
 )
 
 type chatMessageDocument struct {
-	ID         bson.ObjectID `bson:"_id,omitempty"`
-	ChatID     string        `bson:"chat_id"`
-	SenderID   string        `bson:"sender_id"`
-	ReceiverID string        `bson:"receiver_id"`
-	Text       string        `bson:"text"`
-	Read       bool          `bson:"read"`
-	CreatedAt  time.Time     `bson:"created_at"`
+	ID          bson.ObjectID `bson:"_id,omitempty"`
+	ChatID      string        `bson:"chat_id"`
+	SenderID    string        `bson:"sender_id"`
+	ReceiverID  string        `bson:"receiver_id"`
+	MessageType string        `bson:"message_type,omitempty"`
+	Text        string        `bson:"text,omitempty"`
+	ImageURL    string        `bson:"image_url,omitempty"`
+	Read        bool          `bson:"read"`
+	CreatedAt   time.Time     `bson:"created_at"`
 }
 
 func ensureMongoChatReady(c *gin.Context) bool {
@@ -55,16 +70,181 @@ func parseChatPeerID(c *gin.Context) string {
 	return userID
 }
 
-func toChatMessageResponse(doc chatMessageDocument) gin.H {
-	return gin.H{
-		"id":         doc.ID.Hex(),
-		"chatId":     doc.ChatID,
-		"senderId":   doc.SenderID,
-		"receiverId": doc.ReceiverID,
-		"text":       doc.Text,
-		"read":       doc.Read,
-		"createdAt":  doc.CreatedAt,
+func parseChatReceiverID(input map[string]interface{}) string {
+	receiverID := strings.TrimSpace(asString(input["receiver_id"]))
+	if receiverID == "" {
+		receiverID = strings.TrimSpace(asString(input["receiverId"]))
 	}
+	return receiverID
+}
+
+func parseChatReceiverIDFromForm(c *gin.Context) string {
+	receiverID := strings.TrimSpace(c.PostForm("receiver_id"))
+	if receiverID == "" {
+		receiverID = strings.TrimSpace(c.PostForm("receiverId"))
+	}
+	return receiverID
+}
+
+func resolveMessageType(doc chatMessageDocument) string {
+	if doc.MessageType != "" {
+		return doc.MessageType
+	}
+	if strings.TrimSpace(doc.ImageURL) != "" {
+		return messageTypeImage
+	}
+	return messageTypeText
+}
+
+func toChatMessageResponse(doc chatMessageDocument) gin.H {
+	messageType := resolveMessageType(doc)
+	imageURL := strings.TrimSpace(doc.ImageURL)
+
+	return gin.H{
+		"id":          doc.ID.Hex(),
+		"chatId":      doc.ChatID,
+		"senderId":    doc.SenderID,
+		"receiverId":  doc.ReceiverID,
+		"messageType": messageType,
+		"text":        doc.Text,
+		"imageUrl":    imageURL,
+		"read":        doc.Read,
+		"createdAt":   doc.CreatedAt,
+	}
+}
+
+func validateChatParticipants(senderID, receiverID string) (string, int, string) {
+	receiverID = strings.TrimSpace(receiverID)
+	if receiverID == "" {
+		return "", http.StatusBadRequest, "receiver_id is required"
+	}
+	if receiverID == senderID {
+		return "", http.StatusBadRequest, "Cannot send message to yourself"
+	}
+	return receiverID, http.StatusOK, ""
+}
+
+func validateMessageLength(text string) (string, int, string) {
+	text = strings.TrimSpace(text)
+	if len([]rune(text)) > maxMessageLength {
+		return "", http.StatusBadRequest, fmt.Sprintf("Message is too long. Maximum is %d characters", maxMessageLength)
+	}
+	return text, http.StatusOK, ""
+}
+
+func getChatUploadRoot() string {
+	uploadRoot := strings.TrimSpace(os.Getenv("CHAT_UPLOAD_ROOT"))
+	if uploadRoot == "" {
+		uploadRoot = defaultChatUploadRoot
+	}
+	return uploadRoot
+}
+
+func generateRandomHex(length int) (string, error) {
+	if length <= 0 {
+		length = 8
+	}
+	buf := make([]byte, length)
+	if _, err := rand.Read(buf); err != nil {
+		return "", err
+	}
+	return hex.EncodeToString(buf), nil
+}
+
+func detectImageExtension(contentType, fileName string) string {
+	switch strings.ToLower(strings.TrimSpace(contentType)) {
+	case "image/jpeg", "image/jpg":
+		return ".jpg"
+	case "image/png":
+		return ".png"
+	case "image/webp":
+		return ".webp"
+	case "image/gif":
+		return ".gif"
+	case "image/heic":
+		return ".heic"
+	case "image/heif":
+		return ".heif"
+	case "image/avif":
+		return ".avif"
+	}
+
+	ext := strings.ToLower(strings.TrimSpace(filepath.Ext(fileName)))
+	switch ext {
+	case ".jpg", ".jpeg":
+		return ".jpg"
+	case ".png", ".webp", ".gif", ".heic", ".heif", ".avif":
+		return ext
+	default:
+		return ""
+	}
+}
+
+func buildChatImagePublicURL(c *gin.Context, fileName string) string {
+	publicBase := strings.TrimRight(strings.TrimSpace(os.Getenv("PUBLIC_BASE_URL")), "/")
+	if publicBase != "" {
+		return fmt.Sprintf("%s/uploads/%s/%s", publicBase, chatUploadSubDir, fileName)
+	}
+
+	scheme := "http"
+	if c.Request.TLS != nil {
+		scheme = "https"
+	}
+	if forwardedProto := strings.TrimSpace(c.GetHeader("X-Forwarded-Proto")); forwardedProto != "" {
+		scheme = strings.TrimSpace(strings.Split(forwardedProto, ",")[0])
+	}
+
+	return fmt.Sprintf("%s://%s/uploads/%s/%s", scheme, c.Request.Host, chatUploadSubDir, fileName)
+}
+
+func saveUploadedChatImage(c *gin.Context, fileHeader *multipart.FileHeader) (string, int, string) {
+	if fileHeader == nil {
+		return "", http.StatusBadRequest, "image file is required"
+	}
+	if fileHeader.Size <= 0 {
+		return "", http.StatusBadRequest, "Image file is empty"
+	}
+	if fileHeader.Size > maxChatImageSizeBytes {
+		maxMB := maxChatImageSizeBytes / (1024 * 1024)
+		return "", http.StatusBadRequest, fmt.Sprintf("Image is too large. Maximum is %d MB", maxMB)
+	}
+
+	srcFile, err := fileHeader.Open()
+	if err != nil {
+		return "", http.StatusBadRequest, "Failed to read uploaded image"
+	}
+	defer srcFile.Close()
+
+	header := make([]byte, 512)
+	bytesRead, readErr := srcFile.Read(header)
+	if readErr != nil && readErr != io.EOF {
+		return "", http.StatusBadRequest, "Failed to inspect uploaded image"
+	}
+
+	contentType := http.DetectContentType(header[:bytesRead])
+	ext := detectImageExtension(contentType, fileHeader.Filename)
+	if ext == "" {
+		return "", http.StatusBadRequest, "Unsupported image format. Allowed: JPG, PNG, WEBP, GIF, HEIC"
+	}
+
+	uploadRoot := getChatUploadRoot()
+	chatUploadsDir := filepath.Join(uploadRoot, chatUploadSubDir)
+	if err := os.MkdirAll(chatUploadsDir, 0o755); err != nil {
+		return "", http.StatusInternalServerError, "Failed to prepare upload directory"
+	}
+
+	randomPart, err := generateRandomHex(10)
+	if err != nil {
+		return "", http.StatusInternalServerError, "Failed to prepare image name"
+	}
+	fileName := fmt.Sprintf("%d_%s%s", time.Now().UTC().UnixNano(), randomPart, ext)
+	fullPath := filepath.Join(chatUploadsDir, fileName)
+
+	if err := c.SaveUploadedFile(fileHeader, fullPath); err != nil {
+		return "", http.StatusInternalServerError, "Failed to save uploaded image"
+	}
+
+	return buildChatImagePublicURL(c, fileName), http.StatusOK, ""
 }
 
 func GetChatMessages(c *gin.Context) {
@@ -150,43 +330,97 @@ func SendChatMessage(c *gin.Context) {
 		return
 	}
 
-	receiverID := strings.TrimSpace(asString(input["receiver_id"]))
-	if receiverID == "" {
-		receiverID = strings.TrimSpace(asString(input["receiverId"]))
-	}
-
-	text := strings.TrimSpace(asString(input["text"]))
-
-	if receiverID == "" {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "receiver_id is required"})
+	receiverID, status, validationError := validateChatParticipants(senderID, parseChatReceiverID(input))
+	if status != http.StatusOK {
+		c.JSON(status, gin.H{"error": validationError})
 		return
 	}
-	if receiverID == senderID {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Cannot send message to yourself"})
+
+	text, status, validationError := validateMessageLength(asString(input["text"]))
+	if status != http.StatusOK {
+		c.JSON(status, gin.H{"error": validationError})
 		return
 	}
 	if text == "" {
 		c.JSON(http.StatusBadRequest, gin.H{"error": "Message text cannot be empty"})
 		return
 	}
-	if len([]rune(text)) > maxMessageLength {
-		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Message is too long. Maximum is %d characters", maxMessageLength)})
-		return
-	}
 
 	now := time.Now().UTC()
 	doc := chatMessageDocument{
-		ChatID:     buildChatID(senderID, receiverID),
-		SenderID:   senderID,
-		ReceiverID: receiverID,
-		Text:       text,
-		Read:       false,
-		CreatedAt:  now,
+		ChatID:      buildChatID(senderID, receiverID),
+		SenderID:    senderID,
+		ReceiverID:  receiverID,
+		MessageType: messageTypeText,
+		Text:        text,
+		Read:        false,
+		CreatedAt:   now,
 	}
 
 	insertResult, err := repositories.ChatMessagesCollection.InsertOne(c.Request.Context(), doc)
 	if err != nil {
 		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send message"})
+		return
+	}
+
+	insertedID, ok := insertResult.InsertedID.(bson.ObjectID)
+	if ok {
+		doc.ID = insertedID
+	}
+
+	c.JSON(http.StatusCreated, toChatMessageResponse(doc))
+}
+
+func SendChatImageMessage(c *gin.Context) {
+	if !ensureMongoChatReady(c) {
+		return
+	}
+
+	senderID, err := getRequesterUID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
+
+	receiverID, status, validationError := validateChatParticipants(senderID, parseChatReceiverIDFromForm(c))
+	if status != http.StatusOK {
+		c.JSON(status, gin.H{"error": validationError})
+		return
+	}
+
+	text, status, validationError := validateMessageLength(c.PostForm("text"))
+	if status != http.StatusOK {
+		c.JSON(status, gin.H{"error": validationError})
+		return
+	}
+
+	fileHeader, err := c.FormFile("image")
+	if err != nil {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "image file is required"})
+		return
+	}
+
+	imageURL, status, imageError := saveUploadedChatImage(c, fileHeader)
+	if status != http.StatusOK {
+		c.JSON(status, gin.H{"error": imageError})
+		return
+	}
+
+	now := time.Now().UTC()
+	doc := chatMessageDocument{
+		ChatID:      buildChatID(senderID, receiverID),
+		SenderID:    senderID,
+		ReceiverID:  receiverID,
+		MessageType: messageTypeImage,
+		Text:        text,
+		ImageURL:    imageURL,
+		Read:        false,
+		CreatedAt:   now,
+	}
+
+	insertResult, err := repositories.ChatMessagesCollection.InsertOne(c.Request.Context(), doc)
+	if err != nil {
+		c.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to send image message"})
 		return
 	}
 

@@ -2,6 +2,10 @@
 export default defineNuxtConfig({
   devtools: { enabled: true },
   compatibilityDate: '2026-05-16',
+  experimental: {
+    // Nuxt bug workaround: prevents dev-time "#app-manifest" resolve errors.
+    appManifest: false
+  },
   modules: [
     '@nuxtjs/tailwindcss',
     '@pinia/nuxt',

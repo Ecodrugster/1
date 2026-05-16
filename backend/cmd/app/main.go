@@ -97,6 +97,15 @@ func main() {
 	config.AllowHeaders = []string{"Origin", "Content-Length", "Content-Type", "Authorization"}
 	r.Use(cors.New(config))
 
+	uploadRoot := strings.TrimSpace(os.Getenv("CHAT_UPLOAD_ROOT"))
+	if uploadRoot == "" {
+		uploadRoot = "uploads"
+	}
+	if err := os.MkdirAll(filepath.Join(uploadRoot, "chat"), 0o755); err != nil {
+		log.Printf("Failed to create upload directory: %v", err)
+	}
+	r.Static("/uploads", filepath.Clean(uploadRoot))
+
 	// Health check
 	r.GET("/health", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
@@ -140,6 +149,7 @@ func main() {
 		// Chat (MongoDB)
 		v1.GET("/chat/messages", handlers.GetChatMessages)
 		v1.POST("/chat/messages", handlers.SendChatMessage)
+		v1.POST("/chat/messages/image", handlers.SendChatImageMessage)
 		v1.POST("/chat/messages/read", handlers.MarkChatAsRead)
 		v1.GET("/chat/unread-count", handlers.GetChatUnreadCount)
 
