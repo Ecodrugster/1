@@ -1,36 +1,36 @@
-<template>
-  <div class="min-h-screen bg-slate-950 text-slate-200 flex">
+﻿<template>
+  <div class="flex min-h-screen bg-slate-950 text-slate-200">
     <AdminSidebar />
 
-    <main class="flex-grow flex flex-col h-screen overflow-hidden">
-      <header class="h-16 border-b border-white/5 bg-slate-950/60 backdrop-blur-md flex items-center justify-between px-6 md:px-8">
+    <main class="flex h-screen flex-grow flex-col overflow-hidden">
+      <header class="flex h-16 items-center justify-between border-b border-white/5 bg-slate-950/60 px-6 backdrop-blur-md md:px-8">
         <h3 class="text-sm font-medium text-slate-300">
           {{ currentPageTitle }}
         </h3>
         <div class="flex items-center gap-3">
           <NuxtLink
             to="/"
-            class="hidden sm:inline-flex text-xs px-3 py-1.5 rounded-lg bg-white/5 text-slate-300 hover:bg-white/10 hover:text-white transition-all"
+            class="hidden rounded-lg bg-white/5 px-3 py-1.5 text-xs text-slate-300 transition-all hover:bg-white/10 hover:text-white sm:inline-flex"
           >
-            На главную
+            Главная
           </NuxtLink>
           <div class="text-right">
             <div class="text-xs font-bold text-white">{{ userDisplayName }}</div>
-            <div class="text-[10px] text-blue-500 font-mono uppercase tracking-wider">Admin</div>
+            <div class="text-[10px] font-mono uppercase tracking-wider text-blue-500">Админ</div>
           </div>
           <img
             v-if="userStore.user?.photoURL"
             :src="userStore.user.photoURL"
-            class="w-8 h-8 rounded-lg border border-white/10"
+            class="h-8 w-8 rounded-lg border border-white/10"
             alt="avatar"
           />
-          <div v-else class="w-8 h-8 rounded-lg bg-slate-800 flex items-center justify-center text-xs font-bold">
+          <div v-else class="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-800 text-xs font-bold">
             A
           </div>
         </div>
       </header>
 
-      <div class="flex-grow overflow-y-auto p-6 md:p-8 custom-scrollbar">
+      <div class="custom-scrollbar flex-grow overflow-y-auto p-6 md:p-8">
         <slot />
       </div>
     </main>
@@ -47,14 +47,14 @@ const userDisplayName = computed(() => {
 
 const currentPageTitle = computed(() => {
   const titles = {
-    '/admin': 'Обзор системы',
+    '/admin': 'Сводка системы',
     '/admin/users': 'Управление пользователями',
-    '/admin/schedule': 'Расписание пар',
+    '/admin/schedule': 'Управление расписанием',
     '/admin/news': 'Управление новостями',
     '/admin/clubs': 'Управление клубами',
     '/admin/moderation': 'Модерация контента'
   }
-  return titles[route.path] || 'Панель управления'
+  return titles[route.path] || 'Панель администратора'
 })
 </script>
 

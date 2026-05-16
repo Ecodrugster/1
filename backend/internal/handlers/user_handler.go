@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 	"time"
 
@@ -11,7 +12,11 @@ import (
 )
 
 func GetUserProfile(c *gin.Context) {
-	firebaseUID := c.GetString("firebase_uid")
+	firebaseUID, err := getRequesterUID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
 
 	doc, err := repositories.FirestoreClient.Collection("users").Doc(firebaseUID).Get(c.Request.Context())
 	if err != nil {
@@ -23,7 +28,11 @@ func GetUserProfile(c *gin.Context) {
 }
 
 func UpdateUserProfile(c *gin.Context) {
-	firebaseUID := c.GetString("firebase_uid")
+	firebaseUID, err := getRequesterUID(c)
+	if err != nil {
+		c.JSON(http.StatusUnauthorized, gin.H{"error": "Unauthorized"})
+		return
+	}
 
 	var input map[string]interface{}
 	if err := c.ShouldBindJSON(&input); err != nil {
@@ -154,7 +163,28 @@ func GetUserStats(c *gin.Context) {
 }
 
 func GetAllUsers(c *gin.Context) {
-	iter := repositories.FirestoreClient.Collection("users").Limit(50).Documents(c.Request.Context())
+	limit := 500
+	if rawLimit := strings.TrimSpace(c.Query("limit")); rawLimit != "" {
+		parsed, err := strconv.Atoi(rawLimit)
+		if err != nil || parsed <= 0 {
+			c.JSON(http.StatusBadRequest, gin.H{"error": "limit must be a positive integer"})
+			return
+		}
+		if parsed > 2000 {
+			parsed = 2000
+		}
+		limit = parsed
+	}
+
+	roleFilter := strings.ToLower(strings.TrimSpace(c.Query("role")))
+	if roleFilter != "" && roleFilter != "student" && roleFilter != "teacher" && roleFilter != "admin" {
+		c.JSON(http.StatusBadRequest, gin.H{"error": "role must be one of: student, teacher, admin"})
+		return
+	}
+
+	groupFilter := strings.TrimSpace(c.Query("group"))
+
+	iter := repositories.FirestoreClient.Collection("users").Limit(limit).Documents(c.Request.Context())
 
 	var users []map[string]interface{}
 	for {
@@ -167,7 +197,18 @@ func GetAllUsers(c *gin.Context) {
 			return
 		}
 
-		users = append(users, normalizeUserDocument(doc.Data(), doc.Ref.ID))
+		normalized := normalizeUserDocument(doc.Data(), doc.Ref.ID)
+		userRole := asString(normalized["role"])
+		userGroup := asString(normalized["group_name"])
+
+		if roleFilter != "" && userRole != roleFilter {
+			continue
+		}
+		if groupFilter != "" && !strings.EqualFold(userGroup, groupFilter) {
+			continue
+		}
+
+		users = append(users, normalized)
 	}
 
 	c.JSON(http.StatusOK, users)

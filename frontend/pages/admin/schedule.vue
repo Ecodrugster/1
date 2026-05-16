@@ -20,7 +20,7 @@
 
     <div v-else class="space-y-4">
       <div v-if="schedule.length === 0" class="bg-slate-900 border border-dashed border-white/10 rounded-2xl p-12 text-center text-slate-500">
-        Расписание пустое.
+        Расписание пока пустое.
       </div>
 
       <div
@@ -35,7 +35,7 @@
           </div>
           <div class="text-xs text-slate-500 mt-2">
             Группа: {{ item.group_name }} • Преподаватель: {{ item.teacher_name || item.teacher_id }}
-            <span v-if="item.room"> • Кабинет {{ item.room }}</span>
+            <span v-if="item.room"> • Аудитория {{ item.room }}</span>
           </div>
         </div>
 
@@ -52,21 +52,21 @@
 
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
       <div class="bg-slate-900 border border-white/10 rounded-2xl p-8 max-w-2xl w-full shadow-2xl">
-        <h3 class="text-2xl font-bold text-white mb-6">{{ isEditing ? 'Редактировать пару' : 'Новая пара' }}</h3>
+        <h3 class="mb-6 text-2xl font-bold text-white">{{ isEditing ? 'Редактирование пары' : 'Новая пара' }}</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Предмет</label>
+            <label class="mb-2 block text-sm text-slate-400">Предмет</label>
             <input v-model="form.subject" type="text" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Группа</label>
-            <input v-model="form.group_name" type="text" placeholder="П-21" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
+            <label class="mb-2 block text-sm text-slate-400">Группа</label>
+            <input v-model="form.group_name" type="text" placeholder="P-21" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Преподаватель</label>
+            <label class="mb-2 block text-sm text-slate-400">Преподаватель</label>
             <select v-model="form.teacher_id" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white">
               <option value="" disabled>Выберите преподавателя</option>
               <option v-for="teacher in teachers" :key="teacher.uid" :value="teacher.uid">
@@ -76,7 +76,7 @@
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">День недели</label>
+            <label class="mb-2 block text-sm text-slate-400">День недели</label>
             <select v-model.number="form.day_of_week" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white">
               <option :value="1">Понедельник</option>
               <option :value="2">Вторник</option>
@@ -89,29 +89,29 @@
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Номер пары</label>
+            <label class="mb-2 block text-sm text-slate-400">Номер пары</label>
             <input v-model.number="form.pair_number" type="number" min="1" max="10" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Кабинет</label>
+            <label class="mb-2 block text-sm text-slate-400">Аудитория</label>
             <input v-model="form.room" type="text" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Начало</label>
+            <label class="mb-2 block text-sm text-slate-400">Начало</label>
             <input v-model="form.starts_at" type="time" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Конец</label>
+            <label class="mb-2 block text-sm text-slate-400">Конец</label>
             <input v-model="form.ends_at" type="time" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
         </div>
 
         <div class="flex gap-3 mt-8">
-          <button @click="showModal = false" class="flex-grow py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-all">Отмена</button>
-          <button @click="saveItem" class="flex-grow py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all">
+          <button @click="showModal = false" class="flex-grow rounded-xl bg-white/5 py-3 text-white transition-all hover:bg-white/10">Отмена</button>
+          <button @click="saveItem" class="flex-grow rounded-xl bg-blue-600 py-3 font-semibold text-white transition-all hover:bg-blue-500">
             {{ isEditing ? 'Сохранить' : 'Создать' }}
           </button>
         </div>
@@ -167,10 +167,10 @@ const fetchSchedule = async () => {
     const data = await api('/admin/schedule')
     schedule.value = data || []
   } catch (e) {
-    console.error('Failed to fetch schedule:', e)
+    console.error('Не удалось получить расписание:', e)
     const status = e?.status || e?.response?.status
-    const message = e?.data?.error || e?.message || 'Failed to load schedule'
-    errorMessage.value = `Не удалось загрузить расписание (${status || 'no-status'}): ${message}`
+    const message = e?.data?.error || e?.message || 'Не удалось загрузить расписание'
+    errorMessage.value = `Не удалось загрузить расписание (${status || 'без статуса'}): ${message}`
     schedule.value = []
   } finally {
     loading.value = false
@@ -184,8 +184,8 @@ const fetchTeachers = async () => {
     teachers.value = users.filter((u) => ['teacher', 'admin'].includes(u.role))
   } catch (e) {
     const status = e?.status || e?.response?.status
-    const message = e?.data?.error || e?.message || 'Failed to load teachers'
-    errorMessage.value = `Не удалось загрузить преподавателей (${status || 'no-status'}): ${message}`
+    const message = e?.data?.error || e?.message || 'Не удалось загрузить преподавателей'
+    errorMessage.value = `Не удалось загрузить преподавателей (${status || 'без статуса'}): ${message}`
     teachers.value = []
   }
 }
@@ -248,8 +248,8 @@ const saveItem = async () => {
     showModal.value = false
     await fetchSchedule()
   } catch (e) {
-    const message = e?.data?.error || e.message || 'Could not save pair'
-    alert('Error: ' + message)
+    const message = e?.data?.error || e.message || 'Не удалось сохранить пару'
+    alert('Ошибка: ' + message)
   }
 }
 
@@ -259,7 +259,7 @@ const deleteItem = async (id) => {
     await api(`/admin/schedule/${id}`, { method: 'DELETE' })
     await fetchSchedule()
   } catch (e) {
-    alert('Delete error: ' + (e?.data?.error || e.message))
+    alert('Ошибка удаления: ' + (e?.data?.error || e.message))
   }
 }
 

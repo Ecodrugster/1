@@ -1,43 +1,47 @@
-import { 
-  collectionGroup, 
-  query, 
-  where, 
-  onSnapshot,
-  orderBy
-} from 'firebase/firestore'
-
-export default defineNuxtPlugin((nuxtApp) => {
+export default defineNuxtPlugin(() => {
   const userStore = useUserStore()
   const notificationStore = useNotificationStore()
-  const { $firestore } = nuxtApp
+  const { fetchApi: api } = useApi()
 
-  if (process.client) {
-    // Ждем, пока пользователь авторизуется
-    watch(() => userStore.user, (user) => {
+  let pollTimer: ReturnType<typeof setInterval> | null = null
+
+  const stopPolling = () => {
+    if (pollTimer) {
+      clearInterval(pollTimer)
+      pollTimer = null
+    }
+  }
+
+  const loadUnreadCount = async () => {
+    if (!userStore.user) {
+      notificationStore.clear()
+      return
+    }
+
+    try {
+      const data = await api<{ count?: number }>('/chat/unread-count')
+      notificationStore.setUnreadCount(Number(data?.count || 0))
+    } catch (e) {
+      console.error('[Notifications] Failed to load unread count:', e)
+    }
+  }
+
+  const startPolling = () => {
+    stopPolling()
+    loadUnreadCount()
+    pollTimer = setInterval(loadUnreadCount, 5000)
+  }
+
+  watch(
+    () => userStore.user,
+    (user) => {
       if (user) {
-        console.log('[Notifications] Starting global listener for UID:', user.uid)
-        
-        // Слушаем все сообщения во всех чатах, где мы получатели и сообщение не прочитано
-        const q = query(
-          collectionGroup($firestore, 'messages'),
-          where('receiverId', '==', user.uid),
-          where('read', '==', false)
-        )
-
-        onSnapshot(q, (snapshot) => {
-          notificationStore.setUnreadCount(snapshot.size)
-          
-          snapshot.docChanges().forEach((change) => {
-            if (change.type === 'added') {
-              const msg = change.doc.data()
-              console.log('[Notifications] New message received!', msg.text)
-              // Здесь можно добавить Browser Notification API в будущем
-            }
-          })
-        })
+        startPolling()
       } else {
+        stopPolling()
         notificationStore.clear()
       }
-    }, { immediate: true })
-  }
+    },
+    { immediate: true }
+  )
 })

@@ -54,11 +54,16 @@ func resolveServiceAccountPath() string {
 func InitFirebase() {
 	ctx := context.Background()
 	saPath := resolveServiceAccountPath()
+	firebaseJSON := strings.TrimSpace(os.Getenv("FIREBASE_JSON"))
 
 	var app *firebase.App
 	var err error
 
-	if saPath != "" {
+	if firebaseJSON != "" {
+		opt := option.WithCredentialsJSON([]byte(firebaseJSON))
+		app, err = firebase.NewApp(ctx, nil, opt)
+		log.Printf("Firebase Auth initialized from FIREBASE_JSON environment variable")
+	} else if saPath != "" {
 		opt := option.WithCredentialsFile(saPath)
 		app, err = firebase.NewApp(ctx, nil, opt)
 		log.Printf("Firebase Auth initialized from credentials file: %s", saPath)

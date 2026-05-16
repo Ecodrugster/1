@@ -298,7 +298,7 @@ const formatPairLabel = (item) => {
 }
 
 const fetchStudents = async () => {
-  const data = await api('/users')
+  const data = await api('/users?role=student&limit=2000')
   allStudents.value = (data || []).map((u) => ({
     ...u,
     group_name: u.group_name || u.group || ''

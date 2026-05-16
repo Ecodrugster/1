@@ -1,4 +1,5 @@
 import {
+  type Auth,
   type User,
   onIdTokenChanged, 
   signInWithEmailAndPassword, 
@@ -10,13 +11,14 @@ import {
 } from 'firebase/auth'
 
 export const useAuth = () => {
-  const { $auth } = useNuxtApp()
+  const { $auth } = useNuxtApp() as { $auth: Auth | null }
   const userStore = useUserStore()
 
-  const ensureAuth = () => {
+  const ensureAuth = (): Auth => {
     if (!$auth) {
       throw new Error('Firebase Auth is not configured. Set FIREBASE_* variables in frontend/.env and restart Nuxt.')
     }
+    return $auth
   }
 
   const syncSessionFromUser = async (user: User) => {
@@ -27,12 +29,13 @@ export const useAuth = () => {
   }
 
   const initAuth = () => {
-    if (!$auth) {
+    const auth = $auth
+    if (!auth) {
       console.warn('Auth not initialized yet')
       return
     }
     
-    onIdTokenChanged($auth, async (user) => {
+    onIdTokenChanged(auth, async (user) => {
       if (user) {
         await syncSessionFromUser(user)
         
@@ -51,14 +54,14 @@ export const useAuth = () => {
   }
 
   const login = async (email: string, pass: string) => {
-    ensureAuth()
-    return signInWithEmailAndPassword($auth, email, pass)
+    const auth = ensureAuth()
+    return signInWithEmailAndPassword(auth, email, pass)
   }
 
   const loginWithGoogle = async () => {
-    ensureAuth()
+    const auth = ensureAuth()
     const provider = new GoogleAuthProvider()
-    const cred = await signInWithPopup($auth, provider)
+    const cred = await signInWithPopup(auth, provider)
     await syncSessionFromUser(cred.user)
     
     // Создаем/обновляем профиль на бэкенде
@@ -76,8 +79,8 @@ export const useAuth = () => {
   }
 
   const register = async (email: string, pass: string) => {
-    ensureAuth()
-    const cred = await createUserWithEmailAndPassword($auth, email, pass)
+    const auth = ensureAuth()
+    const cred = await createUserWithEmailAndPassword(auth, email, pass)
     await syncSessionFromUser(cred.user)
     
     // Создаем профиль на бэкенде
@@ -96,8 +99,8 @@ export const useAuth = () => {
   }
 
   const logout = async () => {
-    ensureAuth()
-    return signOut($auth)
+    const auth = ensureAuth()
+    return signOut(auth)
   }
 
   return {

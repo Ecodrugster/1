@@ -1,7 +1,19 @@
 import { defineStore } from 'pinia'
 
+interface AdminState {
+  users: any[]
+  posts: any[]
+  news: any[]
+  clubs: any[]
+  loading: boolean
+  stats: {
+    totalUsers: number
+    totalPosts: number
+  }
+}
+
 export const useAdminStore = defineStore('admin', {
-  state: () => ({
+  state: (): AdminState => ({
     users: [],
     posts: [],
     news: [],

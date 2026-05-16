@@ -1,82 +1,84 @@
-<template>
+﻿<template>
   <div class="space-y-6">
-    <div class="flex justify-between items-center">
+    <div class="flex items-center justify-between">
       <h2 class="text-2xl font-bold text-white">Управление клубами</h2>
       <button
         @click="openModal()"
-        class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-semibold transition-all shadow-lg shadow-blue-600/20"
+        class="rounded-xl bg-blue-600 px-6 py-2.5 font-semibold text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-500"
       >
-        + Создать новый клуб
+        + Создать клуб
       </button>
     </div>
 
-    <div v-if="errorMessage" class="bg-red-500/10 border border-red-500/30 text-red-300 rounded-xl px-4 py-3 text-sm">
+    <div v-if="errorMessage" class="rounded-xl border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-300">
       {{ errorMessage }}
     </div>
 
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-      <div v-for="club in clubs" :key="club.id" class="bg-slate-900 border border-white/5 p-6 rounded-2xl shadow-xl flex gap-6 group">
-        <div class="w-24 h-24 rounded-xl flex items-center justify-center text-4xl" :class="club.color || 'bg-blue-600/10'">
-          {{ club.icon || '??' }}
+    <div class="grid grid-cols-1 gap-6 md:grid-cols-2">
+      <div v-for="club in clubs" :key="club.id" class="group flex gap-6 rounded-2xl border border-white/5 bg-slate-900 p-6 shadow-xl">
+        <div class="flex h-24 w-24 items-center justify-center rounded-xl text-4xl" :class="club.color || 'bg-blue-600/10'">
+          {{ club.icon || 'C' }}
         </div>
         <div class="flex-grow">
-          <div class="flex justify-between items-start mb-2">
+          <div class="mb-2 flex items-start justify-between">
             <div>
-              <h3 class="text-white font-bold">{{ club.name }}</h3>
-              <span class="inline-block mt-1 px-2 py-0.5 rounded-md text-[10px] font-bold uppercase tracking-wider"
-                :class="statusClass(club.status)">
-                {{ club.status || 'approved' }}
+              <h3 class="font-bold text-white">{{ club.name }}</h3>
+              <span
+                class="mt-1 inline-block rounded-md px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider"
+                :class="statusClass(club.status)"
+              >
+                {{ statusLabel(club.status) }}
               </span>
             </div>
             <div class="flex gap-2">
-              <button @click="openModal(club)" class="text-slate-500 hover:text-white transition-all text-sm">??</button>
-              <button @click="deleteClub(club.id)" class="text-slate-500 hover:text-red-500 transition-all text-sm">???</button>
+              <button @click="openModal(club)" class="text-sm text-slate-500 transition-all hover:text-white">Изменить</button>
+              <button @click="deleteClub(club.id)" class="text-sm text-slate-500 transition-all hover:text-red-500">Удалить</button>
             </div>
           </div>
-          <p class="text-slate-400 text-xs mb-4 line-clamp-2">{{ club.description }}</p>
-          <div class="text-[10px] text-slate-500 uppercase font-bold tracking-widest">
+          <p class="mb-4 line-clamp-2 text-xs text-slate-400">{{ club.description }}</p>
+          <div class="text-[10px] font-bold uppercase tracking-widest text-slate-500">
             {{ club.members?.length || 0 }} участников
           </div>
         </div>
       </div>
     </div>
 
-    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
-      <div class="bg-slate-900 border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl">
-        <h2 class="text-2xl font-bold text-white mb-6">{{ isEditing ? 'Редактировать клуб' : 'Новый клуб' }}</h2>
+    <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center bg-slate-950/80 p-4 backdrop-blur-sm">
+      <div class="w-full max-w-md rounded-2xl border border-white/10 bg-slate-900 p-8 shadow-2xl">
+        <h2 class="mb-6 text-2xl font-bold text-white">{{ isEditing ? 'Редактирование клуба' : 'Новый клуб' }}</h2>
         <div class="space-y-4">
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-2">Название</label>
-            <input v-model="form.name" type="text" class="w-full bg-slate-800 border-none rounded-lg px-4 py-3 text-white" />
+            <label class="mb-2 block text-sm font-medium text-slate-400">Название</label>
+            <input v-model="form.name" type="text" class="w-full rounded-lg border-none bg-slate-800 px-4 py-3 text-white" />
           </div>
           <div>
-            <label class="block text-sm font-medium text-slate-400 mb-2">Описание</label>
-            <textarea v-model="form.description" rows="3" class="w-full bg-slate-800 border-none rounded-lg px-4 py-3 text-white resize-none"></textarea>
+            <label class="mb-2 block text-sm font-medium text-slate-400">Описание</label>
+            <textarea v-model="form.description" rows="3" class="w-full resize-none rounded-lg border-none bg-slate-800 px-4 py-3 text-white"></textarea>
           </div>
           <div class="grid grid-cols-2 gap-4">
             <div>
-              <label class="block text-sm font-medium text-slate-400 mb-2">Иконка</label>
-              <input v-model="form.icon" type="text" placeholder="??" class="w-full bg-slate-800 border-none rounded-lg px-4 py-3 text-white text-center" />
+              <label class="mb-2 block text-sm font-medium text-slate-400">Иконка</label>
+              <input v-model="form.icon" type="text" placeholder="C" class="w-full rounded-lg border-none bg-slate-800 px-4 py-3 text-center text-white" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-400 mb-2">Цвет</label>
-              <input v-model="form.color" type="text" placeholder="bg-blue-600/20" class="w-full bg-slate-800 border-none rounded-lg px-4 py-3 text-white text-xs" />
+              <label class="mb-2 block text-sm font-medium text-slate-400">Цвет</label>
+              <input v-model="form.color" type="text" placeholder="bg-blue-600/20" class="w-full rounded-lg border-none bg-slate-800 px-4 py-3 text-xs text-white" />
             </div>
           </div>
 
           <div v-if="isEditing">
-            <label class="block text-sm font-medium text-slate-400 mb-2">Статус</label>
-            <select v-model="form.status" class="w-full bg-slate-800 border-none rounded-lg px-4 py-3 text-white">
-              <option value="approved">approved</option>
-              <option value="pending">pending</option>
-              <option value="rejected">rejected</option>
+            <label class="mb-2 block text-sm font-medium text-slate-400">Статус</label>
+            <select v-model="form.status" class="w-full rounded-lg border-none bg-slate-800 px-4 py-3 text-white">
+              <option value="approved">одобрен</option>
+              <option value="pending">на рассмотрении</option>
+              <option value="rejected">отклонен</option>
             </select>
           </div>
         </div>
 
-        <div class="flex space-x-4 mt-8">
-          <button @click="showModal = false" class="flex-grow py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-all">Отмена</button>
-          <button @click="saveClub" class="flex-grow py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all">Сохранить</button>
+        <div class="mt-8 flex space-x-4">
+          <button @click="showModal = false" class="flex-grow rounded-xl bg-white/5 py-3 text-white transition-all hover:bg-white/10">Отмена</button>
+          <button @click="saveClub" class="flex-grow rounded-xl bg-blue-600 py-3 font-semibold text-white transition-all hover:bg-blue-500">Сохранить</button>
         </div>
       </div>
     </div>
@@ -99,7 +101,7 @@ const currentId = ref('')
 const form = reactive({
   name: '',
   description: '',
-  icon: '??',
+  icon: 'C',
   color: 'bg-blue-600/20',
   status: 'approved'
 })
@@ -115,6 +117,12 @@ const statusClass = (status) => {
   }
 }
 
+const statusLabel = (status) => {
+  if (status === 'pending') return 'на рассмотрении'
+  if (status === 'rejected') return 'отклонен'
+  return 'одобрен'
+}
+
 const fetchClubs = async () => {
   errorMessage.value = ''
   try {
@@ -122,8 +130,8 @@ const fetchClubs = async () => {
     clubs.value = data || []
   } catch (e) {
     const status = e?.status || e?.response?.status
-    const message = e?.data?.error || e?.message || 'Ошибка загрузки клубов'
-    errorMessage.value = `Не удалось загрузить клубы (${status || 'no-status'}): ${message}`
+    const message = e?.data?.error || e?.message || 'Не удалось загрузить клубы'
+    errorMessage.value = `Не удалось загрузить клубы (${status || 'без статуса'}): ${message}`
     clubs.value = []
   }
 }
@@ -135,7 +143,7 @@ const openModal = (club = null) => {
     Object.assign(form, {
       name: club.name || '',
       description: club.description || '',
-      icon: club.icon || '??',
+      icon: club.icon || 'C',
       color: club.color || 'bg-blue-600/20',
       status: club.status || 'approved'
     })
@@ -145,7 +153,7 @@ const openModal = (club = null) => {
     Object.assign(form, {
       name: '',
       description: '',
-      icon: '??',
+      icon: 'C',
       color: 'bg-blue-600/20',
       status: 'approved'
     })
@@ -177,7 +185,7 @@ const saveClub = async () => {
 }
 
 const deleteClub = async (id) => {
-  if (!confirm('Вы уверены? Это удалит клуб для всех участников.')) return
+  if (!confirm('Вы уверены? Клуб будет удален для всех участников.')) return
   try {
     await api(`/admin/clubs/${id}`, { method: 'DELETE' })
     await fetchClubs()
@@ -188,4 +196,3 @@ const deleteClub = async (id) => {
 
 onMounted(fetchClubs)
 </script>
-

@@ -52,7 +52,7 @@
               <input
                 v-model="user.groupDraft"
                 type="text"
-                placeholder="напр. П-21"
+                placeholder="Например: P-21"
                 class="bg-slate-800 border border-white/10 rounded-lg px-3 py-2 text-xs text-white w-28"
               />
             </td>
@@ -67,7 +67,7 @@
                 >
                   <option value="student">Студент</option>
                   <option value="teacher">Преподаватель</option>
-                  <option value="admin">Админ</option>
+                  <option value="admin">Администратор</option>
                 </select>
 
                 <button
@@ -105,7 +105,7 @@ const updatingGroup = ref(null)
 const errorMessage = ref('')
 
 const roleLabel = (role) => {
-  if (role === 'admin') return 'Админ'
+  if (role === 'admin') return 'Администратор'
   if (role === 'teacher') return 'Преподаватель'
   return 'Студент'
 }
@@ -135,10 +135,10 @@ const fetchUsers = async () => {
     const list = data.users || []
     users.value = list.map(prepareUser)
   } catch (e) {
-    console.error('Failed to fetch users:', e)
+    console.error('Не удалось получить пользователей:', e)
     const status = e?.status || e?.response?.status
-    const message = e?.data?.error || e?.message || 'Failed to load users'
-    errorMessage.value = `Не удалось загрузить пользователей (${status || 'no-status'}): ${message}`
+    const message = e?.data?.error || e?.message || 'Не удалось загрузить пользователей'
+    errorMessage.value = `Не удалось загрузить пользователей (${status || 'без статуса'}): ${message}`
   } finally {
     loading.value = false
   }
@@ -154,7 +154,7 @@ const filteredUsers = computed(() => {
 })
 
 const updateRole = async (user, newRole) => {
-  if (!confirm(`Изменить роль для ${user.display_name || user.email} на ${roleLabel(newRole)}?`)) return
+  if (!confirm(`Изменить роль для ${user.display_name || user.email} на "${roleLabel(newRole)}"?`)) return
 
   updatingRole.value = user.uid
   try {
@@ -163,9 +163,9 @@ const updateRole = async (user, newRole) => {
       body: { role: newRole }
     })
     user.role = newRole
-    alert('Role updated')
+    alert('Роль обновлена')
   } catch (e) {
-    alert('Role update error: ' + (e?.data?.error || e.message))
+    alert('Ошибка обновления роли: ' + (e?.data?.error || e.message))
   } finally {
     updatingRole.value = null
   }
@@ -183,7 +183,7 @@ const updateGroup = async (user) => {
     user.group = groupName
     alert('Группа сохранена')
   } catch (e) {
-    alert('Group update error: ' + (e?.data?.error || e.message))
+    alert('Ошибка обновления группы: ' + (e?.data?.error || e.message))
   } finally {
     updatingGroup.value = null
   }

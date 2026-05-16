@@ -22,3 +22,7 @@ Thumbs.db
 # Go binaries
 backend/backend
 *.exe
+
+# Local chat uploads
+uploads/
+backend/uploads/

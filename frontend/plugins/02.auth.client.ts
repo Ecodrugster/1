@@ -1,4 +1,4 @@
-export default defineNuxtPlugin(async (nuxtApp) => {
+export default defineNuxtPlugin(async () => {
   const { initAuth } = useAuth()
   
   // Initialize auth only on client side
@@ -25,7 +25,7 @@ export default defineNuxtPlugin(async (nuxtApp) => {
       // If after waiting we are not logged in and on a protected route, redirect
       const route = useRoute()
       if (!userStore.isLoggedIn && !['/login', '/register'].includes(route.path)) {
-        return navigateTo('/login')
+        await navigateTo('/login')
       }
     } catch (e) {
       console.error('Auth initialization error:', e)
