@@ -1,4 +1,4 @@
-﻿<template>
+<template>
   <div class="max-w-4xl mx-auto py-8 px-4">
     <ClientOnly>
       <div v-if="userStore.user" class="bg-slate-900 border border-white/5 rounded-2xl shadow-xl overflow-hidden">
@@ -27,30 +27,30 @@
               @click="openEditModal"
               class="px-6 py-2 bg-white/5 hover:bg-white/10 border border-white/10 rounded-lg text-sm font-medium transition-all"
             >
-              Edit Profile
+              Редактировать Профиль
             </button>
           </div>
 
           <div class="mt-8 grid grid-cols-1 md:grid-cols-2 gap-8">
             <div class="space-y-6">
               <div>
-                <h3 class="text-slate-300 font-semibold mb-3">About</h3>
+                <h3 class="text-slate-300 font-semibold mb-3">О себе</h3>
                 <p class="text-slate-400 text-sm leading-relaxed">
-                  Your ITSTEP Social profile. Role and group are shown here and are used for schedule and journal access.
+                  Твой профиль ITSTEP. Группа указана здесь и используется для расписания и журнала.
                 </p>
               </div>
             </div>
 
             <div class="bg-white/5 rounded-xl p-6 border border-white/5">
-              <h3 class="text-slate-300 font-semibold mb-4">Stats</h3>
+              <h3 class="text-slate-300 font-semibold mb-4">Статистика</h3>
               <div class="grid grid-cols-2 gap-4">
                 <div class="text-center p-4 bg-slate-950/50 rounded-lg">
                   <div class="text-2xl font-bold text-white">{{ stats.posts }}</div>
-                  <div class="text-xs text-slate-500 uppercase">Posts</div>
+                  <div class="text-xs text-slate-500 uppercase">Посты</div>
                 </div>
                 <div class="text-center p-4 bg-slate-950/50 rounded-lg">
                   <div class="text-2xl font-bold text-white">{{ stats.comments }}</div>
-                  <div class="text-xs text-slate-500 uppercase">Comments</div>
+                  <div class="text-xs text-slate-500 uppercase">Комментарии</div>
                 </div>
               </div>
             </div>
@@ -58,18 +58,18 @@
         </div>
       </div>
 
-      <div v-else class="text-center py-20 text-slate-500">Loading profile...</div>
+      <div v-else class="text-center py-20 text-slate-500">Загрузка профиля...</div>
 
       <div v-if="showEditModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
         <div class="bg-slate-900 border border-white/10 rounded-2xl p-8 max-w-md w-full shadow-2xl">
-          <h2 class="text-2xl font-bold text-white mb-6">Profile Settings</h2>
+          <h2 class="text-2xl font-bold text-white mb-6">Настройки профиля</h2>
           <div class="space-y-4">
             <div>
-              <label class="block text-sm font-medium text-slate-400 mb-2">Name</label>
+              <label class="block text-sm font-medium text-slate-400 mb-2">Имя</label>
               <input v-model="editForm.displayName" type="text" class="w-full bg-slate-800 border-none rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50" />
             </div>
             <div>
-              <label class="block text-sm font-medium text-slate-400 mb-2">Photo URL</label>
+              <label class="block text-sm font-medium text-slate-400 mb-2">Фото</label>
               <input v-model="editForm.photoURL" type="text" class="w-full bg-slate-800 border-none rounded-lg px-4 py-3 text-white focus:ring-2 focus:ring-blue-500/50" />
             </div>
           </div>
@@ -103,7 +103,7 @@ const editForm = reactive({
 const stats = ref({ posts: 0, comments: 0 })
 
 const displayName = computed(() => {
-  return userStore.profile?.display_name || userStore.user?.displayName || userStore.user?.email || 'User'
+  return userStore.profile?.display_name || userStore.user?.displayName || userStore.user?.email || 'Пользователь'
 })
 
 const avatarUrl = computed(() => {
