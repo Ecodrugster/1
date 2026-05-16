@@ -258,11 +258,18 @@ const sendMessage = async () => {
     await fetchMessages()
     scrollToBottom()
   } catch (e) {
-    const backendMessage = e?.data?.error || e?.message || 'Неизвестная ошибка'
-    const isTooLongError = /too long|maximum/i.test(String(backendMessage))
-    sendError.value = isTooLongError
-      ? `Сообщение слишком длинное. Максимум ${MAX_MESSAGE_LENGTH} символов.`
-      : `Не удалось отправить сообщение: ${backendMessage}`
+    const backendMessage = String(e?.data?.error || e?.data?.message || e?.message || 'Неизвестная ошибка')
+    const isTooLongError = /too long|maximum|длин/i.test(backendMessage.toLowerCase())
+
+    if (isTooLongError) {
+      const match = backendMessage.match(/(\d{2,6})/)
+      const backendLimit = match ? Number(match[1]) : null
+      const safeLimit = Number.isFinite(backendLimit) ? backendLimit : MAX_MESSAGE_LENGTH
+      sendError.value = `Сообщение слишком длинное. Максимум ${safeLimit} символов.`
+    } else {
+      sendError.value = `Не удалось отправить сообщение: ${backendMessage}`
+    }
+
     console.error('[Chat Debug] Error sending message:', e)
   } finally {
     isSending.value = false
