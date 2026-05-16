@@ -1,12 +1,12 @@
 ﻿<template>
   <div class="space-y-6">
     <div class="flex justify-between items-center">
-      <h2 class="text-2xl font-bold text-white">Schedule Management</h2>
+      <h2 class="text-2xl font-bold text-white">Управление расписанием</h2>
       <button
         @click="openModal()"
         class="bg-blue-600 hover:bg-blue-500 text-white px-6 py-2.5 rounded-xl font-semibold transition-all shadow-lg shadow-blue-600/20"
       >
-        + Add Pair
+        + Добавить пару
       </button>
     </div>
 
@@ -20,7 +20,7 @@
 
     <div v-else class="space-y-4">
       <div v-if="schedule.length === 0" class="bg-slate-900 border border-dashed border-white/10 rounded-2xl p-12 text-center text-slate-500">
-        Schedule is empty.
+        Расписание пока пустое.
       </div>
 
       <div
@@ -31,20 +31,20 @@
         <div>
           <div class="text-white font-bold">{{ item.subject }}</div>
           <div class="text-sm text-slate-400 mt-1">
-            {{ dayName(item.day_of_week) }}, Pair {{ item.pair_number }} • {{ item.starts_at }}{{ item.ends_at ? `-${item.ends_at}` : '' }}
+            {{ dayName(item.day_of_week) }}, Пара {{ item.pair_number }} • {{ item.starts_at }}{{ item.ends_at ? `-${item.ends_at}` : '' }}
           </div>
           <div class="text-xs text-slate-500 mt-2">
-            Group: {{ item.group_name }} • Teacher: {{ item.teacher_name || item.teacher_id }}
-            <span v-if="item.room"> • Room {{ item.room }}</span>
+            Группа: {{ item.group_name }} • Преподаватель: {{ item.teacher_name || item.teacher_id }}
+            <span v-if="item.room"> • Аудитория {{ item.room }}</span>
           </div>
         </div>
 
         <div class="flex gap-2">
           <button @click="openModal(item)" class="px-4 py-2 bg-blue-600/10 hover:bg-blue-600 text-blue-400 hover:text-white rounded-lg text-sm transition-all border border-blue-500/20">
-            Edit
+            Изменить
           </button>
           <button @click="deleteItem(item.id)" class="px-4 py-2 bg-red-500/10 hover:bg-red-500 text-red-400 hover:text-white rounded-lg text-sm transition-all border border-red-500/20">
-            Delete
+            Удалить
           </button>
         </div>
       </div>
@@ -52,23 +52,23 @@
 
     <div v-if="showModal" class="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-sm">
       <div class="bg-slate-900 border border-white/10 rounded-2xl p-8 max-w-2xl w-full shadow-2xl">
-        <h3 class="text-2xl font-bold text-white mb-6">{{ isEditing ? 'Edit Pair' : 'New Pair' }}</h3>
+        <h3 class="mb-6 text-2xl font-bold text-white">{{ isEditing ? 'Редактирование пары' : 'Новая пара' }}</h3>
 
         <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Subject</label>
+            <label class="mb-2 block text-sm text-slate-400">Предмет</label>
             <input v-model="form.subject" type="text" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Group</label>
+            <label class="mb-2 block text-sm text-slate-400">Группа</label>
             <input v-model="form.group_name" type="text" placeholder="P-21" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Teacher</label>
+            <label class="mb-2 block text-sm text-slate-400">Преподаватель</label>
             <select v-model="form.teacher_id" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white">
-              <option value="" disabled>Select teacher</option>
+              <option value="" disabled>Выберите преподавателя</option>
               <option v-for="teacher in teachers" :key="teacher.uid" :value="teacher.uid">
                 {{ teacher.display_name || teacher.displayName || teacher.email || teacher.uid }}
               </option>
@@ -76,43 +76,43 @@
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Day of week</label>
+            <label class="mb-2 block text-sm text-slate-400">День недели</label>
             <select v-model.number="form.day_of_week" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white">
-              <option :value="1">Monday</option>
-              <option :value="2">Tuesday</option>
-              <option :value="3">Wednesday</option>
-              <option :value="4">Thursday</option>
-              <option :value="5">Friday</option>
-              <option :value="6">Saturday</option>
-              <option :value="7">Sunday</option>
+              <option :value="1">Понедельник</option>
+              <option :value="2">Вторник</option>
+              <option :value="3">Среда</option>
+              <option :value="4">Четверг</option>
+              <option :value="5">Пятница</option>
+              <option :value="6">Суббота</option>
+              <option :value="7">Воскресенье</option>
             </select>
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Pair number</label>
+            <label class="mb-2 block text-sm text-slate-400">Номер пары</label>
             <input v-model.number="form.pair_number" type="number" min="1" max="10" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Room</label>
+            <label class="mb-2 block text-sm text-slate-400">Аудитория</label>
             <input v-model="form.room" type="text" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">Start</label>
+            <label class="mb-2 block text-sm text-slate-400">Начало</label>
             <input v-model="form.starts_at" type="time" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
 
           <div>
-            <label class="block text-sm text-slate-400 mb-2">End</label>
+            <label class="mb-2 block text-sm text-slate-400">Конец</label>
             <input v-model="form.ends_at" type="time" class="w-full bg-slate-800 rounded-lg px-4 py-3 text-white" />
           </div>
         </div>
 
         <div class="flex gap-3 mt-8">
-          <button @click="showModal = false" class="flex-grow py-3 bg-white/5 hover:bg-white/10 text-white rounded-xl transition-all">Cancel</button>
-          <button @click="saveItem" class="flex-grow py-3 bg-blue-600 hover:bg-blue-500 text-white rounded-xl font-semibold transition-all">
-            {{ isEditing ? 'Save' : 'Create' }}
+          <button @click="showModal = false" class="flex-grow rounded-xl bg-white/5 py-3 text-white transition-all hover:bg-white/10">Отмена</button>
+          <button @click="saveItem" class="flex-grow rounded-xl bg-blue-600 py-3 font-semibold text-white transition-all hover:bg-blue-500">
+            {{ isEditing ? 'Сохранить' : 'Создать' }}
           </button>
         </div>
       </div>
@@ -149,15 +149,15 @@ const form = reactive({
 
 const dayName = (day) => {
   const names = {
-    1: 'Monday',
-    2: 'Tuesday',
-    3: 'Wednesday',
-    4: 'Thursday',
-    5: 'Friday',
-    6: 'Saturday',
-    7: 'Sunday'
+    1: 'Понедельник',
+    2: 'Вторник',
+    3: 'Среда',
+    4: 'Четверг',
+    5: 'Пятница',
+    6: 'Суббота',
+    7: 'Воскресенье'
   }
-  return names[Number(day)] || 'Unknown'
+  return names[Number(day)] || 'Неизвестно'
 }
 
 const fetchSchedule = async () => {
@@ -167,10 +167,10 @@ const fetchSchedule = async () => {
     const data = await api('/admin/schedule')
     schedule.value = data || []
   } catch (e) {
-    console.error('Failed to fetch schedule:', e)
+    console.error('Не удалось получить расписание:', e)
     const status = e?.status || e?.response?.status
-    const message = e?.data?.error || e?.message || 'Failed to load schedule'
-    errorMessage.value = `Could not load schedule (${status || 'no-status'}): ${message}`
+    const message = e?.data?.error || e?.message || 'Не удалось загрузить расписание'
+    errorMessage.value = `Не удалось загрузить расписание (${status || 'без статуса'}): ${message}`
     schedule.value = []
   } finally {
     loading.value = false
@@ -184,8 +184,8 @@ const fetchTeachers = async () => {
     teachers.value = users.filter((u) => ['teacher', 'admin'].includes(u.role))
   } catch (e) {
     const status = e?.status || e?.response?.status
-    const message = e?.data?.error || e?.message || 'Failed to load teachers'
-    errorMessage.value = `Could not load teachers (${status || 'no-status'}): ${message}`
+    const message = e?.data?.error || e?.message || 'Не удалось загрузить преподавателей'
+    errorMessage.value = `Не удалось загрузить преподавателей (${status || 'без статуса'}): ${message}`
     teachers.value = []
   }
 }
@@ -248,18 +248,18 @@ const saveItem = async () => {
     showModal.value = false
     await fetchSchedule()
   } catch (e) {
-    const message = e?.data?.error || e.message || 'Could not save pair'
-    alert('Error: ' + message)
+    const message = e?.data?.error || e.message || 'Не удалось сохранить пару'
+    alert('Ошибка: ' + message)
   }
 }
 
 const deleteItem = async (id) => {
-  if (!confirm('Delete this pair from schedule?')) return
+  if (!confirm('Удалить эту пару из расписания?')) return
   try {
     await api(`/admin/schedule/${id}`, { method: 'DELETE' })
     await fetchSchedule()
   } catch (e) {
-    alert('Delete error: ' + (e?.data?.error || e.message))
+    alert('Ошибка удаления: ' + (e?.data?.error || e.message))
   }
 }
 

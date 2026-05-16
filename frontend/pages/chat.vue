@@ -1,96 +1,116 @@
-<template>
-  <div class="max-w-6xl mx-auto py-8 px-4 h-[calc(100vh-120px)]">
-    <div class="bg-slate-900 border border-white/5 rounded-xl h-full shadow-xl flex overflow-hidden">
-      <!-- Chat List -->
-      <div class="w-80 border-r border-white/5 flex flex-col">
-        <div class="p-4 border-b border-white/5">
-          <h3 class="text-white font-semibold mb-2">Студенты</h3>
-          <input 
+﻿<template>
+  <div class="mx-auto h-[calc(100vh-120px)] max-w-6xl px-4 py-8">
+    <div class="flex h-full overflow-hidden rounded-xl border border-white/5 bg-slate-900 shadow-xl">
+      <!-- Список пользователей -->
+      <div class="flex w-80 flex-col border-r border-white/5">
+        <div class="border-b border-white/5 p-4">
+          <h3 class="mb-2 font-semibold text-white">Студенты</h3>
+          <input
             v-model="searchQuery"
-            type="text" 
-            placeholder="Поиск..." 
-            class="w-full bg-slate-800 border-none rounded-lg px-4 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500/50" 
+            type="text"
+            placeholder="Поиск..."
+            class="w-full rounded-lg border-none bg-slate-800 px-4 py-2 text-sm text-white focus:ring-1 focus:ring-blue-500/50"
           />
         </div>
+
         <div class="flex-grow overflow-y-auto">
-          <div 
-            v-for="user in filteredUsers" 
-            :key="user.uid" 
+          <div
+            v-for="user in filteredUsers"
+            :key="user.uid"
+            class="flex cursor-pointer items-center space-x-3 border-b border-white/5 p-4 transition-all last:border-0 hover:bg-white/5"
+            :class="{ 'border-l-2 border-l-blue-600 bg-blue-600/10': selectedUser?.uid === user.uid }"
             @click="selectUser(user)"
-            class="p-4 hover:bg-white/5 cursor-pointer border-b border-white/5 last:border-0 transition-all flex items-center space-x-3"
-            :class="{'bg-blue-600/10 border-l-2 border-l-blue-600': selectedUser?.uid === user.uid}"
           >
-            <img v-if="user.photoURL" :src="user.photoURL" class="w-10 h-10 rounded-full" />
-            <div v-else class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-xs text-slate-500 font-bold">
+            <img v-if="user.photoURL" :src="user.photoURL" class="h-10 w-10 rounded-full" />
+            <div
+              v-else
+              class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-slate-500"
+            >
               {{ (user.displayName || user.email || 'U')[0].toUpperCase() }}
             </div>
-            <div class="flex-grow min-w-0">
-              <h4 class="text-white text-sm font-medium truncate">{{ user.displayName || user.email }}</h4>
-              <p class="text-slate-500 text-[10px] uppercase">Студент</p>
+
+            <div class="min-w-0 flex-grow">
+              <h4 class="truncate text-sm font-medium text-white">{{ user.displayName || user.email }}</h4>
+              <p class="text-[10px] uppercase text-slate-500">Студент</p>
             </div>
           </div>
         </div>
       </div>
 
-      <!-- Chat Window -->
-      <div class="flex-grow flex flex-col">
+      <!-- Окно переписки -->
+      <div class="flex flex-grow flex-col">
         <template v-if="selectedUser">
-          <div class="p-4 border-b border-white/5 flex items-center justify-between bg-slate-900/50">
+          <div class="flex items-center justify-between border-b border-white/5 bg-slate-900/50 p-4">
             <div class="flex items-center space-x-3">
-              <img v-if="selectedUser.photoURL" :src="selectedUser.photoURL" class="w-10 h-10 rounded-full" />
-              <div v-else class="w-10 h-10 rounded-full bg-slate-800 flex items-center justify-center text-xs font-bold text-white">
+              <img v-if="selectedUser.photoURL" :src="selectedUser.photoURL" class="h-10 w-10 rounded-full" />
+              <div
+                v-else
+                class="flex h-10 w-10 items-center justify-center rounded-full bg-slate-800 text-xs font-bold text-white"
+              >
                 {{ (selectedUser.displayName || selectedUser.email || 'U')[0].toUpperCase() }}
               </div>
+
               <div>
-                <h4 class="text-white font-medium text-sm">{{ selectedUser.displayName || selectedUser.email }}</h4>
-                <p class="text-green-500 text-[10px] uppercase font-bold">В сети</p>
+                <h4 class="text-sm font-medium text-white">{{ selectedUser.displayName || selectedUser.email }}</h4>
+                <p class="text-[10px] font-bold uppercase text-green-500">В сети</p>
               </div>
             </div>
           </div>
 
-          <!-- Messages -->
-          <div class="flex-grow overflow-y-auto p-6 space-y-4 bg-slate-950/30" ref="messageContainer">
-            <div 
-              v-for="msg in messages" 
+          <div ref="messageContainer" class="flex-grow space-y-4 overflow-y-auto bg-slate-950/30 p-6">
+            <div
+              v-for="msg in messages"
               :key="msg.id"
               class="flex"
               :class="msg.senderId === userStore.user.uid ? 'justify-end' : 'justify-start'"
             >
-              <div 
+              <div
                 class="max-w-[70%] rounded-2xl px-4 py-2 text-sm shadow-lg"
-                :class="msg.senderId === userStore.user.uid ? 'bg-blue-600 text-white rounded-tr-none' : 'bg-slate-800 text-slate-200 rounded-tl-none'"
+                :class="msg.senderId === userStore.user.uid ? 'rounded-tr-none bg-blue-600 text-white' : 'rounded-tl-none bg-slate-800 text-slate-200'"
               >
                 <p>{{ msg.text }}</p>
-                <div class="text-[9px] mt-1 opacity-50 text-right">
-                  {{ msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], {hour: '2-digit', minute:'2-digit'}) : '...' }}
+                <div class="mt-1 text-right text-[9px] opacity-50">
+                  {{ msg.createdAt ? new Date(msg.createdAt).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' }) : '...' }}
                 </div>
               </div>
             </div>
           </div>
 
-          <!-- Input -->
-          <div class="p-4 border-t border-white/5">
-            <form @submit.prevent="sendMessage" class="flex items-center space-x-4">
-              <input 
+          <div class="border-t border-white/5 p-4">
+            <div
+              v-if="sendError"
+              class="mb-3 rounded-lg border border-red-500/30 bg-red-500/10 px-3 py-2 text-xs text-red-300"
+            >
+              {{ sendError }}
+            </div>
+
+            <form class="flex items-center space-x-4" @submit.prevent="sendMessage">
+              <input
                 v-model="newMessage"
-                type="text" 
-                placeholder="Введите сообщение..." 
-                class="flex-grow bg-slate-800 border-none rounded-lg px-4 py-3 text-white focus:ring-1 focus:ring-blue-500/50" 
+                type="text"
+                placeholder="Введите сообщение..."
+                class="flex-grow rounded-lg border-none bg-slate-800 px-4 py-3 text-white focus:ring-1 focus:ring-blue-500/50"
+                @input="sendError = ''"
               />
-              <button 
+
+              <button
                 type="submit"
-                :disabled="!newMessage.trim()"
-                class="p-3 bg-blue-600 hover:bg-blue-500 disabled:opacity-50 rounded-lg text-white transition-all shadow-lg shadow-blue-600/20"
+                :disabled="!newMessage.trim() || isSending"
+                class="rounded-lg bg-blue-600 px-4 py-3 text-sm text-white shadow-lg shadow-blue-600/20 transition-all hover:bg-blue-500 disabled:opacity-50"
               >
-                ✈️
+                Отправить
               </button>
             </form>
+
+            <div class="mt-2 text-right text-[11px]" :class="messageLength > MAX_MESSAGE_LENGTH ? 'text-red-400' : 'text-slate-500'">
+              {{ messageLength }} / {{ MAX_MESSAGE_LENGTH }}
+            </div>
           </div>
         </template>
 
-        <div v-else class="flex-grow flex flex-col items-center justify-center text-slate-500 space-y-4">
+        <div v-else class="flex flex-grow flex-col items-center justify-center space-y-4 text-slate-500">
           <div class="text-6xl text-slate-800">💬</div>
-          <p class="italic">Выберите студента для начала общения</p>
+          <p class="italic">Выберите студента, чтобы начать диалог</p>
         </div>
       </div>
     </div>
@@ -106,21 +126,29 @@ const userStore = useUserStore()
 const { fetchApi: api } = useApi()
 const route = useRoute()
 
+const MAX_MESSAGE_LENGTH = 10000
+
 const users = ref([])
 const searchQuery = ref('')
 const selectedUser = ref(null)
 const messages = ref([])
 const newMessage = ref('')
+const sendError = ref('')
+const isSending = ref(false)
 const messageContainer = ref(null)
 
 let pollTimer = null
 
+const messageLength = computed(() => Array.from(newMessage.value).length)
+
 const filteredUsers = computed(() => {
-  return users.value.filter(u => 
-    u.uid !== userStore.user.uid && 
-    (u.displayName?.toLowerCase().includes(searchQuery.value.toLowerCase()) || 
-     u.email?.toLowerCase().includes(searchQuery.value.toLowerCase()))
-  )
+  return users.value.filter((u) => {
+    return (
+      u.uid !== userStore.user.uid &&
+      (u.displayName?.toLowerCase().includes(searchQuery.value.toLowerCase()) ||
+        u.email?.toLowerCase().includes(searchQuery.value.toLowerCase()))
+    )
+  })
 })
 
 const stopPolling = () => {
@@ -183,7 +211,6 @@ const startPollingMessages = () => {
 const fetchUsers = async () => {
   try {
     const data = await api('/users')
-    console.log('[Chat Debug] Fetched Users:', data)
     users.value = data || []
 
     const targetUID = typeof route.query.uid === 'string' ? route.query.uid.trim() : ''
@@ -200,17 +227,23 @@ const fetchUsers = async () => {
 
 const selectUser = (user) => {
   messages.value = []
+  sendError.value = ''
   selectedUser.value = user
   startPollingMessages()
 }
 
 const sendMessage = async () => {
-  if (!newMessage.value.trim() || !selectedUser.value) return
+  if (!newMessage.value.trim() || !selectedUser.value || isSending.value) return
+
+  if (messageLength.value > MAX_MESSAGE_LENGTH) {
+    sendError.value = `Сообщение слишком длинное. Максимум ${MAX_MESSAGE_LENGTH} символов.`
+    return
+  }
 
   const otherUserId = selectedUser.value.uid
-
   const text = newMessage.value
-  newMessage.value = ''
+  isSending.value = true
+  sendError.value = ''
 
   try {
     await api('/chat/messages', {
@@ -221,10 +254,18 @@ const sendMessage = async () => {
       }
     })
 
+    newMessage.value = ''
     await fetchMessages()
     scrollToBottom()
   } catch (e) {
+    const backendMessage = e?.data?.error || e?.message || 'Неизвестная ошибка'
+    const isTooLongError = /too long|maximum/i.test(String(backendMessage))
+    sendError.value = isTooLongError
+      ? `Сообщение слишком длинное. Максимум ${MAX_MESSAGE_LENGTH} символов.`
+      : `Не удалось отправить сообщение: ${backendMessage}`
     console.error('[Chat Debug] Error sending message:', e)
+  } finally {
+    isSending.value = false
   }
 }
 
@@ -236,4 +277,3 @@ onUnmounted(() => {
   stopPolling()
 })
 </script>
-

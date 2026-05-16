@@ -1,6 +1,7 @@
 package handlers
 
 import (
+	"fmt"
 	"net/http"
 	"sort"
 	"strconv"
@@ -16,7 +17,7 @@ import (
 const (
 	defaultChatLimit = 100
 	maxChatLimit     = 300
-	maxMessageLength = 2000
+	maxMessageLength = 10000
 )
 
 type chatMessageDocument struct {
@@ -169,7 +170,7 @@ func SendChatMessage(c *gin.Context) {
 		return
 	}
 	if len([]rune(text)) > maxMessageLength {
-		c.JSON(http.StatusBadRequest, gin.H{"error": "Message is too long"})
+		c.JSON(http.StatusBadRequest, gin.H{"error": fmt.Sprintf("Message is too long. Maximum is %d characters", maxMessageLength)})
 		return
 	}
 

@@ -4,6 +4,7 @@ const notificationStore = useNotificationStore()
 const { logout } = useAuth()
 const { fetchApi: api } = useApi()
 const router = useRouter()
+const route = useRoute()
 
 const searchQuery = ref('')
 const handleSearch = () => {
@@ -15,6 +16,45 @@ const handleSearch = () => {
 const handleLogout = async () => {
   await logout()
   router.push('/login')
+}
+
+const isNavActive = (path, exact = false) => {
+  if (exact) return route.path === path
+  return route.path === path || route.path.startsWith(`${path}/`)
+}
+
+const navClasses = (path, options = {}) => {
+  const exact = options.exact || false
+  const accent = options.accent || 'blue'
+  const active = isNavActive(path, exact)
+
+  const accentLine = {
+    blue: 'after:bg-blue-500',
+    yellow: 'after:bg-yellow-400',
+    green: 'after:bg-emerald-400',
+    red: 'after:bg-red-400'
+  }[accent] || 'after:bg-blue-500'
+
+  const inactiveText = {
+    blue: 'text-slate-400 hover:text-white',
+    yellow: 'text-yellow-500 hover:text-yellow-400',
+    green: 'text-green-500 hover:text-green-400',
+    red: 'text-red-500 hover:text-red-400'
+  }[accent] || 'text-slate-400 hover:text-white'
+
+  const activeText = {
+    blue: 'text-white',
+    yellow: 'text-yellow-300',
+    green: 'text-green-300',
+    red: 'text-red-300'
+  }[accent] || 'text-white'
+
+  return [
+    'relative text-sm font-medium transition-all duration-200 pb-2',
+    "after:content-[''] after:absolute after:left-0 after:-bottom-[18px] after:h-[2px] after:w-full after:rounded-full after:origin-left after:transition-all after:duration-300",
+    accentLine,
+    active ? `after:opacity-100 after:scale-x-100 ${activeText}` : `after:opacity-0 after:scale-x-0 ${inactiveText}`
+  ]
 }
 
 onMounted(async () => {
@@ -53,21 +93,21 @@ onMounted(async () => {
         </div>
 
         <div class="flex items-center space-x-6">
-          <NuxtLink to="/" class="text-sm font-medium text-slate-400 hover:text-white transition-all">Лента</NuxtLink>
-          <NuxtLink to="/clubs" class="text-sm font-medium text-slate-400 hover:text-white transition-all">Клубы</NuxtLink>
-          <NuxtLink to="/schedule" class="text-sm font-medium text-slate-400 hover:text-white transition-all">Расписание</NuxtLink>
-          <NuxtLink to="/guide" class="text-sm font-bold text-yellow-500 hover:text-yellow-400 transition-all flex items-center">
+          <NuxtLink to="/" :class="navClasses('/', { exact: true })">Лента</NuxtLink>
+          <NuxtLink to="/clubs" :class="navClasses('/clubs')">Клубы</NuxtLink>
+          <NuxtLink to="/schedule" :class="navClasses('/schedule')">Расписание</NuxtLink>
+          <NuxtLink to="/guide" :class="[...navClasses('/guide', { accent: 'yellow' }), 'font-bold', 'flex items-center']">
             <span class="mr-1">💡</span> Навигатор
           </NuxtLink>
-          <NuxtLink to="/chat" class="text-sm font-medium text-slate-400 hover:text-white transition-all">Чат</NuxtLink>
+          <NuxtLink to="/chat" :class="navClasses('/chat')">Чат</NuxtLink>
 
-          <NuxtLink v-if="userStore.isTeacherLike" to="/teacher/grades" class="text-sm font-bold text-blue-500 hover:text-blue-400 transition-all flex items-center">
+          <NuxtLink v-if="userStore.isTeacherLike" to="/teacher/grades" :class="[...navClasses('/teacher/grades', { accent: 'blue' }), 'font-bold', 'flex items-center']">
             <span class="mr-1">🎓</span> Журнал
           </NuxtLink>
-          <NuxtLink v-if="userStore.role === 'student'" to="/profile/grades" class="text-sm font-bold text-green-500 hover:text-green-400 transition-all flex items-center">
+          <NuxtLink v-if="userStore.role === 'student'" to="/profile/grades" :class="[...navClasses('/profile/grades', { accent: 'green' }), 'font-bold', 'flex items-center']">
             <span class="mr-1">📝</span> Мои оценки
           </NuxtLink>
-          <NuxtLink v-if="userStore.isAdmin" to="/admin" class="text-sm font-bold text-red-500 hover:text-red-400 transition-all flex items-center">
+          <NuxtLink v-if="userStore.isAdmin" to="/admin" :class="[...navClasses('/admin', { accent: 'red' }), 'font-bold', 'flex items-center']">
             <span class="mr-1">🛡️</span> Админ
           </NuxtLink>
         </div>
